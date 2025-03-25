@@ -14,9 +14,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
 
 import es.familycash.proveedores.entity.ProductoEntity;
+import es.familycash.proveedores.entity.ProveedorEntity;
 import es.familycash.proveedores.service.ProductoService;
+
+import java.io.IOException;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -25,40 +30,60 @@ import org.springframework.data.domain.Page;
 @RestController
 @RequestMapping("/producto")
 public class ProductoController {
-    
-        @Autowired
-        ProductoService oProductoService;
-    
-    
-        @GetMapping("")
-        public ResponseEntity<Page<ProductoEntity>> getPage(Pageable oPageable, @RequestParam Optional<String> filter) {
-            return new ResponseEntity<>(oProductoService.getPage(oPageable, filter), HttpStatus.OK);
-        }
-    
-        @GetMapping("/{codigo}")
-        public ResponseEntity<ProductoEntity> get(@PathVariable Long codigo) {
-            return new ResponseEntity<>(oProductoService.get(codigo), HttpStatus.OK);
-        }
-    
-        @GetMapping("/count")
-        public ResponseEntity<Long> count() {
-            return new ResponseEntity<>(oProductoService.count(), HttpStatus.OK);
-        }
-    
-        @DeleteMapping("/delete/{codigo}")
-        public ResponseEntity<Long> delete(@PathVariable Long codigo) {
-            return new ResponseEntity<>(oProductoService.delete(codigo), HttpStatus.OK);
-        }
-    
-        @PostMapping("/new")
-        public ResponseEntity<ProductoEntity> create(@RequestBody ProductoEntity oProductoEntity) {
-            return new ResponseEntity<>(oProductoService.create(oProductoEntity), HttpStatus.OK);
-        }
-    
-    
-        @PutMapping("")
-        public ResponseEntity<ProductoEntity> update(@RequestBody ProductoEntity oProductoEntity) {
-            return new ResponseEntity<>(oProductoService.update(oProductoEntity), HttpStatus.OK);
-        }
-    
+
+    @Autowired
+    ProductoService oProductoService;
+
+    @GetMapping("")
+    public ResponseEntity<Page<ProductoEntity>> getPage(Pageable oPageable, @RequestParam Optional<String> filter) {
+        return new ResponseEntity<>(oProductoService.getPage(oPageable, filter), HttpStatus.OK);
+    }
+
+    @GetMapping("/{codigo}")
+    public ResponseEntity<ProductoEntity> get(@PathVariable Long codigo) {
+        return new ResponseEntity<>(oProductoService.get(codigo), HttpStatus.OK);
+    }
+
+    @GetMapping("/count")
+    public ResponseEntity<Long> count() {
+        return new ResponseEntity<>(oProductoService.count(), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/delete/{codigo}")
+    public ResponseEntity<Long> delete(@PathVariable Long codigo) {
+        return new ResponseEntity<>(oProductoService.delete(codigo), HttpStatus.OK);
+    }
+
+    @PutMapping("/new")
+    public ResponseEntity<ProductoEntity> create(
+            @RequestParam("Nombre") String nombre,
+            @RequestParam("Imagen") MultipartFile imagen
+
+    ) throws IOException {
+
+        byte[] imagenBytes = imagen.getBytes();
+        ProductoEntity oProductoEntity = new ProductoEntity();
+        oProductoEntity.setNombre(nombre);
+        oProductoEntity.setImagen(imagenBytes);
+
+        ProductoEntity savedProducto = oProductoService.create(oProductoEntity);
+
+        return new ResponseEntity<>(savedProducto, HttpStatus.OK);
+    }
+
+    @PutMapping("")
+    public ResponseEntity<ProductoEntity> update(@RequestBody ProductoEntity oProductoEntity) {
+        return new ResponseEntity<>(oProductoService.update(oProductoEntity), HttpStatus.OK);
+    }
+
+    @GetMapping("/{codigo}/imagen")
+    public ResponseEntity<byte[]> obtenerImagen(@PathVariable Long codigo) {
+        // Buscar el Producto directamente, ya que findById lanza la excepción si no lo encuentra
+        ProductoEntity oProducto = oProductoService.findById(codigo);
+        
+        // Retornar la imagen como respuesta HTTP
+        return ResponseEntity.ok()
+            .contentType(MediaType.IMAGE_PNG)
+            .body(oProducto.getImagen());
+    }
 }

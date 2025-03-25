@@ -1,5 +1,6 @@
 package es.familycash.proveedores.service;
 
+import java.util.Base64;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -29,9 +30,26 @@ public class ProductoService {
     }
 
     public ProductoEntity get(Long id) {
-        return oProductoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto no encontrado"));
-        // return oProductoRepository.findById(id).get();
+        Optional <ProductoEntity> oProducto = oProductoRepository.findById(id);
+        if (oProducto.isPresent()) {
+            ProductoEntity producto = oProducto.get();
+
+            if(producto.getImagen() != null) {
+                String base64Foto = Base64.getEncoder().encodeToString(producto.getImagen());
+            }
+            return producto;
+        } 
+        return null;
+    }
+
+    public void saveImagen(Long id, String base64Foto){
+        Optional <ProductoEntity> oProducto = oProductoRepository.findById(id);
+        if (oProducto.isPresent()){
+            ProductoEntity producto = oProducto.get();
+            byte[] imagen = Base64.getDecoder().decode(base64Foto);
+            producto.setImagen(imagen);
+            oProductoRepository.save(producto);
+        }
     }
 
     public Long count() {
@@ -52,6 +70,9 @@ public class ProductoService {
         if (oProductoEntity.getNombre() != null) {
             oProductoEntityFromDatabase.setNombre(oProductoEntity.getNombre());
         }
+        if (oProductoEntity.getImagen() != null) {
+            oProductoEntityFromDatabase.setImagen(oProductoEntity.getImagen());
+        }
         return oProductoRepository.save(oProductoEntityFromDatabase);
     }
 
@@ -59,5 +80,19 @@ public class ProductoService {
         oProductoRepository.deleteAll();
         return this.count();
     }
-    
+
+    public ProductoEntity uploadImagen(Long codigo, byte[] imagen) {
+        Optional <ProductoEntity> oProducto = oProductoRepository.findById(codigo);
+        if (oProducto.isPresent()){
+            ProductoEntity producto = oProducto.get();
+            producto.setImagen(imagen);
+            return oProductoRepository.save(producto);
+        }
+        return null;
+    }
+
+    public ProductoEntity findById(Long codigo) {
+        return oProductoRepository.findById(codigo)
+            .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+    }
 }

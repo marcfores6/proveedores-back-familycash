@@ -61,5 +61,11 @@ public class ProveedorController {
     public ResponseEntity<ProveedorEntity> update(@RequestBody ProveedorEntity oProveedorEntity) {
         return new ResponseEntity<>(oProveedorService.update(oProveedorEntity), HttpStatus.OK);
     }
+
+
+    @DeleteMapping("/all")
+    public ResponseEntity<Long> deleteAll() {
+        return new ResponseEntity<Long>(oProveedorService.deleteAll(), HttpStatus.OK);
+    }
     
 }
