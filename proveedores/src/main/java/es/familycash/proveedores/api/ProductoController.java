@@ -18,10 +18,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.MediaType;
 
 import es.familycash.proveedores.entity.ProductoEntity;
-import es.familycash.proveedores.entity.ProveedorEntity;
 import es.familycash.proveedores.service.ProductoService;
 
-import java.io.IOException;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -54,26 +52,22 @@ public class ProductoController {
         return new ResponseEntity<>(oProductoService.delete(codigo), HttpStatus.OK);
     }
 
-    @PutMapping("/new")
-    public ResponseEntity<ProductoEntity> create(
+    @PostMapping("/new")
+    public ResponseEntity<?> create(
             @RequestParam("Nombre") String nombre,
-            @RequestParam("Imagen") MultipartFile imagen
+            @RequestParam(value = "Imagen", required = false) MultipartFile imagen)
 
-    ) throws IOException {
-
-        byte[] imagenBytes = imagen.getBytes();
-        ProductoEntity oProductoEntity = new ProductoEntity();
-        oProductoEntity.setNombre(nombre);
-        oProductoEntity.setImagen(imagenBytes);
-
-        ProductoEntity savedProducto = oProductoService.create(oProductoEntity);
-
-        return new ResponseEntity<>(savedProducto, HttpStatus.OK);
+    {
+        return oProductoService.createProducto(nombre, imagen);
     }
 
-    @PutMapping("")
-    public ResponseEntity<ProductoEntity> update(@RequestBody ProductoEntity oProductoEntity) {
-        return new ResponseEntity<>(oProductoService.update(oProductoEntity), HttpStatus.OK);
+    @PutMapping("/update/{codigo}")
+    public ResponseEntity<?> update(
+        @PathVariable Long codigo,
+        @RequestParam("Nombre") String nombre,
+        @RequestParam(value = "Imagen", required = false) MultipartFile imagen
+        ) {
+        return oProductoService.updateProducto(codigo,nombre, imagen);
     }
 
     @GetMapping("/{codigo}/imagen")

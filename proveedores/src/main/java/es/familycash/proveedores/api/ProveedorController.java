@@ -3,6 +3,7 @@ package es.familycash.proveedores.api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,11 +15,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import es.familycash.proveedores.entity.ProveedorEntity;
 import es.familycash.proveedores.service.ProveedorService;
-import java.util.Optional;
 
+import java.io.IOException;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 
@@ -29,7 +32,6 @@ public class ProveedorController {
 
     @Autowired
     ProveedorService oProveedorService;
-
 
     @GetMapping("")
     public ResponseEntity<Page<ProveedorEntity>> getPage(Pageable oPageable, @RequestParam Optional<String> filter) {
@@ -52,20 +54,41 @@ public class ProveedorController {
     }
 
     @PostMapping("/new")
-    public ResponseEntity<ProveedorEntity> create(@RequestBody ProveedorEntity oProveedorEntity) {
-        return new ResponseEntity<>(oProveedorService.create(oProveedorEntity), HttpStatus.OK);
+    public ResponseEntity<?> create(
+            @RequestParam("Empresa") String empresa,
+            @RequestParam("Email") String email,
+            @RequestParam("Password") String password,
+            @RequestParam(value = "Imagen", required = false) MultipartFile imagen
+
+    ) {
+        return oProveedorService.createProveedor(empresa, email, password, imagen);
     }
 
-
-    @PutMapping("")
-    public ResponseEntity<ProveedorEntity> update(@RequestBody ProveedorEntity oProveedorEntity) {
-        return new ResponseEntity<>(oProveedorService.update(oProveedorEntity), HttpStatus.OK);
+    @PutMapping("update/{id}")
+    public ResponseEntity<?> update(
+            @PathVariable Long id,
+            @RequestParam("Empresa") String empresa,
+            @RequestParam("Email") String email,
+            @RequestParam("Password") String password,
+            @RequestParam(value = "Imagen", required = false) MultipartFile imagen) {
+        return oProveedorService.updateProveedor(id, empresa, email, password, imagen);
     }
-
 
     @DeleteMapping("/all")
     public ResponseEntity<Long> deleteAll() {
         return new ResponseEntity<Long>(oProveedorService.deleteAll(), HttpStatus.OK);
     }
-    
+
+    @GetMapping("/{id}/imagen")
+    public ResponseEntity<byte[]> obtenerImagen(@PathVariable Long id) {
+        // Buscar el Proveedor directamente, ya que findById lanza la excepción si no lo
+        // encuentra
+        ProveedorEntity oProveedor = oProveedorService.findById(id);
+
+        // Retornar la imagen como respuesta HTTP
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_PNG)
+                .body(oProveedor.getImagen());
+    }
+
 }
