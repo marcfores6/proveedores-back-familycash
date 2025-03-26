@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,7 +19,6 @@ import org.springframework.web.multipart.MultipartFile;
 import es.familycash.proveedores.entity.ProveedorEntity;
 import es.familycash.proveedores.service.ProveedorService;
 
-import java.io.IOException;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -89,6 +87,11 @@ public class ProveedorController {
         return ResponseEntity.ok()
                 .contentType(MediaType.IMAGE_PNG)
                 .body(oProveedor.getImagen());
+    }
+
+    @GetMapping("/byemail/{email}")
+    public ResponseEntity<ProveedorEntity> getProveedorByEmail(@PathVariable(value = "email") String email) {
+        return ResponseEntity.ok(oProveedorService.getByEmail(email));
     }
 
 }

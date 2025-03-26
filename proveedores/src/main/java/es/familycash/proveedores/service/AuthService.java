@@ -59,17 +59,17 @@ public class AuthService {
         return this.getProveedorFromToken().getTipoproveedor().getId() == 1L;
     }
 
-    public boolean isContable() {
+    public boolean isClient() {
         return this.getProveedorFromToken().getTipoproveedor().getId() == 2L;
     }
 
-    public boolean isAdminOrContable() {
-        return this.isAdmin() || this.isContable();
+    public boolean isAdminOrClient() {
+        return this.isAdmin() || this.isClient();
     }
 
-    public boolean isContableWithItsOwnData(Long id) {
+    public boolean isClientWithItsOwnData(Long id) {
         ProveedorEntity oProveedorEntity = this.getProveedorFromToken();
-        return this.isContable() && oProveedorEntity.getId() == id;
+        return this.isClient() && oProveedorEntity.getId() == id;
     }
 
 }
