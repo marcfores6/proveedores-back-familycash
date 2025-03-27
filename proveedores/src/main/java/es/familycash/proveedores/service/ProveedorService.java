@@ -57,7 +57,7 @@ public class ProveedorService {
         return oProveedorRepository.save(oProveedorEntity);
     }
 
-    public ResponseEntity<?> createProveedor(String empresa, String email, String password, TipoproveedorEntity tipoproveedor, MultipartFile imagen) {
+    /*public ResponseEntity<?> createProveedor(String empresa, String email, String password, TipoproveedorEntity tipoproveedor, MultipartFile imagen) {
         try {
 
             if (empresa == null || empresa.trim().isEmpty() || email == null || email.trim().isEmpty()
@@ -83,7 +83,40 @@ public class ProveedorService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("error", "Error al subir la imagen."));
         }
+    }*/
+
+    public ResponseEntity<?> createProveedor(String empresa, String email, String password, TipoproveedorEntity tipoproveedor, MultipartFile imagen, String imagenUrl) {
+        try {
+            if (empresa == null || empresa.trim().isEmpty() || email == null || email.trim().isEmpty()
+                    || password == null || password.trim().isEmpty() || tipoproveedor == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Collections.singletonMap("error", "Todos los campos son obligatorios."));
+            }
+    
+            ProveedorEntity nuevoProveedor = new ProveedorEntity();
+            nuevoProveedor.setEmpresa(empresa);
+            nuevoProveedor.setEmail(email);
+            nuevoProveedor.setPassword(password);
+            nuevoProveedor.setTipoproveedor(tipoproveedor);
+    
+            if (imagen != null && !imagen.isEmpty()) {
+                nuevoProveedor.setImagen(imagen.getBytes());
+            }
+    
+            // 💾 Guardar URL si no se ha enviado una imagen en bytes
+            if (imagenUrl != null && !imagenUrl.isBlank()) {
+                nuevoProveedor.setImagenUrl(imagenUrl);
+            }
+    
+            ProveedorEntity proveedorCreado = oProveedorRepository.save(nuevoProveedor);
+            return ResponseEntity.status(HttpStatus.CREATED).body(proveedorCreado);
+    
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Error al subir la imagen."));
+        }
     }
+    
 
     public ResponseEntity<?> updateProveedor(Long id, String empresa, String email, String password, TipoproveedorEntity tipoproveedor,
             MultipartFile imagen) {

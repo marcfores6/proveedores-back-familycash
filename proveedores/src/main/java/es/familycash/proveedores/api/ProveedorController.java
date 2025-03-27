@@ -58,10 +58,9 @@ public class ProveedorController {
             @RequestParam("Email") String email,
             @RequestParam("Password") String password,
             @RequestParam(value = "Imagen", required = false) MultipartFile imagen,
-            @RequestParam("TipoProveedor") TipoproveedorEntity idTipoProveedor
-
-    ) {
-        return oProveedorService.createProveedor(empresa, email, password, idTipoProveedor, imagen);
+            @RequestParam(value = "ImagenUrl", required = false) String imagenUrl,
+            @RequestParam("TipoProveedor") TipoproveedorEntity idTipoProveedor) {
+        return oProveedorService.createProveedor(empresa, email, password, idTipoProveedor, imagen, imagenUrl);
     }
 
     @PutMapping("update/{id}")
