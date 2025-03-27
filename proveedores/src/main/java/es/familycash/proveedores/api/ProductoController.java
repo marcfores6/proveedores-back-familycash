@@ -62,24 +62,39 @@ public class ProductoController {
         return oProductoService.createProducto(nombre, idTipoProveedor, imagen);
     }
 
+    @PostMapping("/new-url")
+    public ResponseEntity<?> createDesdeUrl(
+            @RequestParam("Nombre") String nombre,
+            @RequestParam("TipoProducto") TipoproductoEntity tipoProducto,
+            @RequestParam("ImagenUrl") String imagenUrl) {
+        return oProductoService.createProductoDesdeUrl(nombre, tipoProducto, imagenUrl);
+    }
+
+    @PutMapping("/update-url/{codigo}")
+    public ResponseEntity<?> updateUrl(
+            @PathVariable Long codigo,
+            @RequestParam("ImagenUrl") String imagenUrl) {
+        return oProductoService.updateImagenUrl(codigo, imagenUrl);
+    }
+
     @PutMapping("/update/{codigo}")
     public ResponseEntity<?> update(
-        @PathVariable Long codigo,
-        @RequestParam("Nombre") String nombre,
-        @RequestParam("TipoProducto") TipoproductoEntity idTipoProveedor,
-        @RequestParam(value = "Imagen", required = false) MultipartFile imagen
-        ) {
-        return oProductoService.updateProducto(codigo,nombre,idTipoProveedor, imagen);
+            @PathVariable Long codigo,
+            @RequestParam("Nombre") String nombre,
+            @RequestParam("TipoProducto") TipoproductoEntity idTipoProveedor,
+            @RequestParam(value = "Imagen", required = false) MultipartFile imagen) {
+        return oProductoService.updateProducto(codigo, nombre, idTipoProveedor, imagen);
     }
 
     @GetMapping("/{codigo}/imagen")
     public ResponseEntity<byte[]> obtenerImagen(@PathVariable Long codigo) {
-        // Buscar el Producto directamente, ya que findById lanza la excepción si no lo encuentra
+        // Buscar el Producto directamente, ya que findById lanza la excepción si no lo
+        // encuentra
         ProductoEntity oProducto = oProductoService.findById(codigo);
-        
+
         // Retornar la imagen como respuesta HTTP
         return ResponseEntity.ok()
-            .contentType(MediaType.IMAGE_PNG)
-            .body(oProducto.getImagen());
+                .contentType(MediaType.IMAGE_PNG)
+                .body(oProducto.getImagen());
     }
 }

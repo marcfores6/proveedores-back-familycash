@@ -16,7 +16,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
 @Entity
 @Getter
 @Setter
@@ -37,8 +36,11 @@ public class ProductoEntity {
     @Column(name = "Imagen")
     private byte[] imagen;
 
+    @Column(name = "imagen_url")
+    private String imagenUrl;
+
     @ManyToOne(fetch = jakarta.persistence.FetchType.EAGER)
     @JoinColumn(name = "id_tipoproducto")
     private TipoproductoEntity tipoproducto;
-    
+
 }

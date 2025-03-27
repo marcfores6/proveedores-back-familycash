@@ -151,4 +151,6 @@ public class ProveedorService {
             throw new UnauthorizedAccessException("No tienes permisos para ver el Proveedor");
         }
     }
+
+    
 }

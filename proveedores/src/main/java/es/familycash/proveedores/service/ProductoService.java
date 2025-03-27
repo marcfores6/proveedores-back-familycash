@@ -123,4 +123,35 @@ public class ProductoService {
         return oProductoRepository.findById(codigo)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
     }
+
+
+    public ResponseEntity<?> createProductoDesdeUrl(String nombre, TipoproductoEntity tipoproducto, String imagenUrl) {
+        if (nombre == null || nombre.trim().isEmpty() || imagenUrl == null || imagenUrl.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("error", "Nombre y URL de imagen son obligatorios."));
+        }
+    
+        ProductoEntity nuevoProducto = new ProductoEntity();
+        nuevoProducto.setNombre(nombre);
+        nuevoProducto.setTipoproducto(tipoproducto);
+        nuevoProducto.setImagenUrl(imagenUrl);
+    
+        ProductoEntity productoCreado = oProductoRepository.save(nuevoProducto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(productoCreado);
+    }
+
+    
+
+    public ResponseEntity<?> updateImagenUrl(Long codigo, String imagenUrl) {
+        ProductoEntity productoExistente = oProductoRepository.findById(codigo)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado con Codigo: " + codigo));
+    
+        productoExistente.setImagenUrl(imagenUrl);
+        ProductoEntity productoActualizado = oProductoRepository.save(productoExistente);
+        return ResponseEntity.status(HttpStatus.OK).body(productoActualizado);
+    }
+
+    
+
+    
 }
