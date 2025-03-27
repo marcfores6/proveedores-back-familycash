@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import es.familycash.proveedores.repository.ProductoRepository;
 import es.familycash.proveedores.entity.ProductoEntity;
+import es.familycash.proveedores.entity.TipoproductoEntity;
 
 @Service
 public class ProductoService {
@@ -37,16 +38,6 @@ public class ProductoService {
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado con Codigo: " + codigo));
     }
 
-    //public void saveImagen(Long id, String base64Foto) {
-     //   Optional<ProductoEntity> oProducto = oProductoRepository.findById(id);
-       // if (oProducto.isPresent()) {
-     //       ProductoEntity producto = oProducto.get();
-      //      byte[] imagen = Base64.getDecoder().decode(base64Foto);
-       //     producto.setImagen(imagen);
-        //    oProductoRepository.save(producto);
-        //}
-    //}
-
     public Long count() {
         return oProductoRepository.count();
     }
@@ -60,7 +51,7 @@ public class ProductoService {
         return oProductoRepository.save(oProductoEntity);
     }
 
-    public ResponseEntity<?> createProducto(String nombre, MultipartFile imagen) {
+    public ResponseEntity<?> createProducto(String nombre, TipoproductoEntity tipoproducto, MultipartFile imagen) {
         try {
 
             if (nombre == null || nombre.trim().isEmpty()) {
@@ -70,6 +61,8 @@ public class ProductoService {
 
             ProductoEntity nuevoProducto = new ProductoEntity();
             nuevoProducto.setNombre(nombre);
+            nuevoProducto.setTipoproducto(tipoproducto);
+            
 
             if (imagen != null && !imagen.isEmpty()) {
                 nuevoProducto.setImagen(imagen.getBytes());
@@ -85,13 +78,14 @@ public class ProductoService {
 
     }
 
-    public ResponseEntity<?> updateProducto(Long codigo, String nombre, MultipartFile imagen) {
+    public ResponseEntity<?> updateProducto(Long codigo, String nombre, TipoproductoEntity tipoproducto, MultipartFile imagen) {
         try {
 
             ProductoEntity productoExistente = oProductoRepository.findById(codigo)
                     .orElseThrow(() -> new RuntimeException("Producto no encontrado con Codigo: " + codigo));
 
             productoExistente.setNombre(nombre);
+            productoExistente.setTipoproducto(tipoproducto);
 
             if (imagen != null && !imagen.isEmpty()) {
                 productoExistente.setImagen(imagen.getBytes());

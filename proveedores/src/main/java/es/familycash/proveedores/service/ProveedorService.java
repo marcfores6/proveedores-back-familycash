@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import es.familycash.proveedores.entity.ProveedorEntity;
+import es.familycash.proveedores.entity.TipoproveedorEntity;
 import es.familycash.proveedores.exception.ResourceNotFoundException;
 import es.familycash.proveedores.exception.UnauthorizedAccessException;
 import es.familycash.proveedores.repository.ProveedorRepository;
@@ -56,11 +57,11 @@ public class ProveedorService {
         return oProveedorRepository.save(oProveedorEntity);
     }
 
-    public ResponseEntity<?> createProveedor(String empresa, String email, String password, MultipartFile imagen) {
+    public ResponseEntity<?> createProveedor(String empresa, String email, String password, TipoproveedorEntity tipoproveedor, MultipartFile imagen) {
         try {
 
             if (empresa == null || empresa.trim().isEmpty() || email == null || email.trim().isEmpty()
-                    || password == null || password.trim().isEmpty()) {
+                    || password == null || password.trim().isEmpty() || tipoproveedor == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Collections.singletonMap("error", "Todos los campos son obligatorios."));
 
@@ -70,6 +71,7 @@ public class ProveedorService {
             nuevoProveedor.setEmpresa(empresa);
             nuevoProveedor.setEmail(email);
             nuevoProveedor.setPassword(password);
+            nuevoProveedor.setTipoproveedor(tipoproveedor);
 
             if (imagen != null && !imagen.isEmpty()) {
                 nuevoProveedor.setImagen(imagen.getBytes());
@@ -83,7 +85,7 @@ public class ProveedorService {
         }
     }
 
-    public ResponseEntity<?> updateProveedor(Long id, String empresa, String email, String password,
+    public ResponseEntity<?> updateProveedor(Long id, String empresa, String email, String password, TipoproveedorEntity tipoproveedor,
             MultipartFile imagen) {
         try {
 
@@ -93,6 +95,7 @@ public class ProveedorService {
             proveedorExistente.setEmpresa(empresa);
             proveedorExistente.setEmail(email);
             proveedorExistente.setPassword(password);
+            proveedorExistente.setTipoproveedor(tipoproveedor);
 
             if (imagen != null && !imagen.isEmpty()) {
                 proveedorExistente.setImagen(imagen.getBytes());

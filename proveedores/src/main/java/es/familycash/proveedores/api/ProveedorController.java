@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import es.familycash.proveedores.entity.ProveedorEntity;
+import es.familycash.proveedores.entity.TipoproveedorEntity;
 import es.familycash.proveedores.service.ProveedorService;
 
 import java.util.Optional;
@@ -56,10 +57,11 @@ public class ProveedorController {
             @RequestParam("Empresa") String empresa,
             @RequestParam("Email") String email,
             @RequestParam("Password") String password,
-            @RequestParam(value = "Imagen", required = false) MultipartFile imagen
+            @RequestParam(value = "Imagen", required = false) MultipartFile imagen,
+            @RequestParam("TipoProveedor") TipoproveedorEntity idTipoProveedor
 
     ) {
-        return oProveedorService.createProveedor(empresa, email, password, imagen);
+        return oProveedorService.createProveedor(empresa, email, password, idTipoProveedor, imagen);
     }
 
     @PutMapping("update/{id}")
@@ -68,8 +70,9 @@ public class ProveedorController {
             @RequestParam("Empresa") String empresa,
             @RequestParam("Email") String email,
             @RequestParam("Password") String password,
+            @RequestParam("TipoProveedor") TipoproveedorEntity idTipoProveedor,
             @RequestParam(value = "Imagen", required = false) MultipartFile imagen) {
-        return oProveedorService.updateProveedor(id, empresa, email, password, imagen);
+        return oProveedorService.updateProveedor(id, empresa, email, password, idTipoProveedor, imagen);
     }
 
     @DeleteMapping("/all")

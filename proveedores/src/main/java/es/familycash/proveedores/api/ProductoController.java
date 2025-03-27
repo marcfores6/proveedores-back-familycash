@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.MediaType;
 
 import es.familycash.proveedores.entity.ProductoEntity;
+import es.familycash.proveedores.entity.TipoproductoEntity;
 import es.familycash.proveedores.service.ProductoService;
 
 import java.util.Optional;
@@ -54,19 +55,21 @@ public class ProductoController {
     @PostMapping("/new")
     public ResponseEntity<?> create(
             @RequestParam("Nombre") String nombre,
+            @RequestParam("TipoProducto") TipoproductoEntity idTipoProveedor,
             @RequestParam(value = "Imagen", required = false) MultipartFile imagen)
 
     {
-        return oProductoService.createProducto(nombre, imagen);
+        return oProductoService.createProducto(nombre, idTipoProveedor, imagen);
     }
 
     @PutMapping("/update/{codigo}")
     public ResponseEntity<?> update(
         @PathVariable Long codigo,
         @RequestParam("Nombre") String nombre,
+        @RequestParam("TipoProducto") TipoproductoEntity idTipoProveedor,
         @RequestParam(value = "Imagen", required = false) MultipartFile imagen
         ) {
-        return oProductoService.updateProducto(codigo,nombre, imagen);
+        return oProductoService.updateProducto(codigo,nombre,idTipoProveedor, imagen);
     }
 
     @GetMapping("/{codigo}/imagen")
