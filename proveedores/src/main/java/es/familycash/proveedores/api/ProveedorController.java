@@ -64,15 +64,17 @@ public class ProveedorController {
     }
 
     @PutMapping("update/{id}")
-    public ResponseEntity<?> update(
-            @PathVariable Long id,
-            @RequestParam("Empresa") String empresa,
-            @RequestParam("Email") String email,
-            @RequestParam("Password") String password,
-            @RequestParam("TipoProveedor") TipoproveedorEntity idTipoProveedor,
-            @RequestParam(value = "Imagen", required = false) MultipartFile imagen) {
-        return oProveedorService.updateProveedor(id, empresa, email, password, idTipoProveedor, imagen);
-    }
+public ResponseEntity<?> update(
+        @PathVariable Long id,
+        @RequestParam("Empresa") String empresa,
+        @RequestParam("Email") String email,
+        @RequestParam("Password") String password,
+        @RequestParam("TipoProveedor") TipoproveedorEntity idTipoProveedor,
+        @RequestParam(value = "Imagen", required = false) MultipartFile imagen,
+        @RequestParam(value = "ImagenUrl", required = false) String imagenUrl) {
+    return oProveedorService.updateProveedor(id, empresa, email, password, idTipoProveedor, imagen, imagenUrl);
+}
+
 
     @DeleteMapping("/all")
     public ResponseEntity<Long> deleteAll() {

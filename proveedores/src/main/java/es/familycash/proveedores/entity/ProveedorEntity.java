@@ -44,10 +44,11 @@ public class ProveedorEntity {
     @Column(name = "Imagen")
     private byte[] imagen;
 
-    String imagenUrl;
+    @Column(length = 1000)
+    private String imagenUrl;
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.EAGER)
     @JoinColumn(name = "id_tipoproveedor")
     private TipoproveedorEntity tipoproveedor;
-    
+
 }

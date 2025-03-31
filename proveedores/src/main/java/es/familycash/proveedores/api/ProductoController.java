@@ -20,6 +20,7 @@ import es.familycash.proveedores.entity.ProductoEntity;
 import es.familycash.proveedores.entity.TipoproductoEntity;
 import es.familycash.proveedores.service.ProductoService;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -55,46 +56,19 @@ public class ProductoController {
     @PostMapping("/new")
     public ResponseEntity<?> create(
             @RequestParam("Nombre") String nombre,
-            @RequestParam("TipoProducto") TipoproductoEntity idTipoProveedor,
-            @RequestParam(value = "Imagen", required = false) MultipartFile imagen)
-
-    {
-        return oProductoService.createProducto(nombre, idTipoProveedor, imagen);
-    }
-
-    @PostMapping("/new-url")
-    public ResponseEntity<?> createDesdeUrl(
-            @RequestParam("Nombre") String nombre,
             @RequestParam("TipoProducto") TipoproductoEntity tipoProducto,
-            @RequestParam("ImagenUrl") String imagenUrl) {
-        return oProductoService.createProductoDesdeUrl(nombre, tipoProducto, imagenUrl);
-    }
-
-    @PutMapping("/update-url/{codigo}")
-    public ResponseEntity<?> updateUrl(
-            @PathVariable Long codigo,
-            @RequestParam("ImagenUrl") String imagenUrl) {
-        return oProductoService.updateImagenUrl(codigo, imagenUrl);
+            @RequestParam(value = "Imagen", required = false) List<MultipartFile> imagen,
+            @RequestParam(value = "ImagenUrl", required = false) String imagenUrl) {
+        return oProductoService.createProducto(nombre, tipoProducto, imagen, imagenUrl);
     }
 
     @PutMapping("/update/{codigo}")
     public ResponseEntity<?> update(
             @PathVariable Long codigo,
             @RequestParam("Nombre") String nombre,
-            @RequestParam("TipoProducto") TipoproductoEntity idTipoProveedor,
-            @RequestParam(value = "Imagen", required = false) MultipartFile imagen) {
-        return oProductoService.updateProducto(codigo, nombre, idTipoProveedor, imagen);
-    }
-
-    @GetMapping("/{codigo}/imagen")
-    public ResponseEntity<byte[]> obtenerImagen(@PathVariable Long codigo) {
-        // Buscar el Producto directamente, ya que findById lanza la excepción si no lo
-        // encuentra
-        ProductoEntity oProducto = oProductoService.findById(codigo);
-
-        // Retornar la imagen como respuesta HTTP
-        return ResponseEntity.ok()
-                .contentType(MediaType.IMAGE_PNG)
-                .body(oProducto.getImagen());
+            @RequestParam("TipoProducto") TipoproductoEntity tipoProducto,
+            @RequestParam(value = "Imagen", required = false) MultipartFile imagen,
+            @RequestParam(value = "ImagenUrl", required = false) String imagenUrl) {
+        return oProductoService.updateProducto(codigo, nombre, tipoProducto, imagen, imagenUrl);
     }
 }
