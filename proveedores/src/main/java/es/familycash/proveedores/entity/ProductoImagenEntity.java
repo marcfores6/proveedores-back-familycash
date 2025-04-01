@@ -1,5 +1,7 @@
 package es.familycash.proveedores.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -12,7 +14,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "producto_imagen")
-public class ProductoImagen {
+public class ProductoImagenEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,6 +22,7 @@ public class ProductoImagen {
 
     @ManyToOne
     @JoinColumn(name = "producto_codigo", referencedColumnName = "codigo")
+    @JsonBackReference
     private ProductoEntity producto;
 
     @Column(length = 1000)

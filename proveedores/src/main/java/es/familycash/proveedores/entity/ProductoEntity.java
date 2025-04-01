@@ -41,7 +41,7 @@ public class ProductoEntity {
     private String imagenUrl;
 
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductoImagen> imagenes = new ArrayList<>();
+    private List<ProductoImagenEntity> imagenes = new ArrayList<>();
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.EAGER)
     @JoinColumn(name = "id_tipoproducto")

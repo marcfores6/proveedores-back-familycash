@@ -1,6 +1,8 @@
 package es.familycash.proveedores.helper;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
@@ -35,6 +37,14 @@ public class ImagePathResolver {
         // Ruta absoluta para guardar la imagen
         Path absolutePath = Paths.get(BASE_FOLDER, entityType, String.valueOf(entityId), fileName);
 
+        // Crear el directorio si no existe
+        try {
+            Files.createDirectories(absolutePath.getParent());
+            System.out.println("Directorio creado: " + absolutePath.getParent().toString());  // Depuración
+        } catch (IOException e) {
+            System.err.println("Error al crear el directorio: " + e.getMessage());
+        }
+
         return new ImagePath(absolutePath, relativeUrl);
     }
 
@@ -43,5 +53,17 @@ public class ImagePathResolver {
      */
     public static Path getFolderPath(String entityType, Long entityId) {
         return Paths.get(BASE_FOLDER, entityType, String.valueOf(entityId));
+    }
+
+    /**
+     * Guarda una imagen en el disco en la ruta especificada
+     * @param ruta Ruta absoluta donde se almacenará la imagen
+     * @param imagenBytes El contenido binario de la imagen
+     * @throws IOException
+     */
+    public static void saveImage(Path ruta, byte[] imagenBytes) throws IOException {
+        // Verificar si la carpeta existe y luego escribir la imagen
+        Files.write(ruta, imagenBytes);
+        System.out.println("Imagen guardada en: " + ruta.toString());  // Depuración
     }
 }

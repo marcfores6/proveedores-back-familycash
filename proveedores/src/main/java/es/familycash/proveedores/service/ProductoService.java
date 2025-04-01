@@ -2,6 +2,7 @@ package es.familycash.proveedores.service;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -15,9 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import es.familycash.proveedores.entity.ProductoEntity;
-import es.familycash.proveedores.entity.ProductoImagen;
+import es.familycash.proveedores.entity.ProductoImagenEntity;
 import es.familycash.proveedores.entity.TipoproductoEntity;
 import es.familycash.proveedores.helper.ImagePathResolver;
+import es.familycash.proveedores.repository.ProductoImagenRepository;
 import es.familycash.proveedores.repository.ProductoRepository;
 
 @Service
@@ -25,6 +27,9 @@ public class ProductoService {
 
     @Autowired
     ProductoRepository oProductoRepository;
+
+    @Autowired
+    private ProductoImagenRepository oProductoImagenRepository;
 
     public Page<ProductoEntity> getPage(Pageable oPageable, Optional<String> filter) {
         if (filter.isPresent()) {
@@ -52,41 +57,50 @@ public class ProductoService {
         return oProductoRepository.save(oProductoEntity);
     }
 
-    public ResponseEntity<?> createProducto(String nombre, TipoproductoEntity tipoproducto,
+    public ResponseEntity<?> createProducto(String nombre, TipoproductoEntity tipoProducto,
             List<MultipartFile> imagenes, String imagenUrl) {
 
         try {
-            if (nombre == null || nombre.trim().isEmpty() || tipoproducto == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Collections.singletonMap("error", "Todos los campos son obligatorios."));
-            }
-
             ProductoEntity nuevoProducto = new ProductoEntity();
             nuevoProducto.setNombre(nombre);
-            nuevoProducto.setTipoproducto(tipoproducto);
+            nuevoProducto.setTipoproducto(tipoProducto);
 
-            // Guardar el producto en la base de datos
+            // Guardamos el producto
             ProductoEntity productoGuardado = oProductoRepository.save(nuevoProducto);
 
-            // Guardar las imágenes
+            // Si se proporcionan imágenes, las guardamos
             if (imagenes != null && !imagenes.isEmpty()) {
                 for (MultipartFile imagen : imagenes) {
-                    ProductoImagen productoImagen = new ProductoImagen();
-                    // Aquí estamos creando una nueva imagen para cada archivo
-                    ImagePathResolver.ImagePath ruta = ImagePathResolver.generate("articulo",
-                            productoGuardado.getCodigo(), imagen.getOriginalFilename());
-                    Files.createDirectories(ruta.absolutePath.getParent());
-                    Files.write(ruta.absolutePath, imagen.getBytes());
+                    ProductoImagenEntity productoImagen = new ProductoImagenEntity();
+                    productoImagen.setProducto(productoGuardado); // Relacionamos la imagen con el producto
 
+                    // Generar la ruta usando ImagePathResolver
+                    ImagePathResolver.ImagePath ruta = ImagePathResolver.generate(
+                            "articulo", productoGuardado.getCodigo(), imagen.getOriginalFilename());
+
+                    // Guardar la imagen en disco
+                    try {
+                        ImagePathResolver.saveImage(ruta.absolutePath, imagen.getBytes());
+                    } catch (IOException e) {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body(Collections.singletonMap("error", "Error al guardar la imagen."));
+                    }
+
+                    // Guardamos la imagen en la base de datos
+                    productoImagen.setImagen(imagen.getBytes());
                     productoImagen.setImagenUrl("/" + ruta.relativeUrl.replace("\\", "/"));
-                    productoImagen.setProducto(productoGuardado);
 
-                    // Guardamos la imagen asociada al producto
-                    productoGuardado.getImagenes().add(productoImagen);
+                    // Guardar la relación de imagen
+                    oProductoImagenRepository.save(productoImagen);
                 }
+            } else if (imagenUrl != null && !imagenUrl.isEmpty()) {
+                // Si no se subieron imágenes, pero se proporcionó una URL, la guardamos
+                ProductoImagenEntity productoImagen = new ProductoImagenEntity();
+                productoImagen.setProducto(productoGuardado);
+                productoImagen.setImagenUrl(imagenUrl);
+                oProductoImagenRepository.save(productoImagen);
             }
 
-            oProductoRepository.save(productoGuardado);
             return ResponseEntity.status(HttpStatus.CREATED).body(productoGuardado);
 
         } catch (IOException e) {
@@ -98,47 +112,6 @@ public class ProductoService {
         }
     }
 
-    /*
-     * public ResponseEntity<?> createProducto(String nombre, TipoproductoEntity
-     * tipoproducto, MultipartFile imagen,
-     * String imagenUrl) {
-     * try {
-     * if (nombre == null || nombre.trim().isEmpty() || tipoproducto == null) {
-     * return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-     * .body(Collections.singletonMap("error",
-     * "Todos los campos son obligatorios."));
-     * }
-     * 
-     * ProductoEntity nuevoProducto = new ProductoEntity();
-     * nuevoProducto.setNombre(nombre);
-     * nuevoProducto.setTipoproducto(tipoproducto);
-     * 
-     * ProductoEntity productoGuardado = oProductoRepository.save(nuevoProducto);
-     * 
-     * if (imagen != null && !imagen.isEmpty()) {
-     * ImagePathResolver.ImagePath ruta = ImagePathResolver.generate(
-     * "articulo", productoGuardado.getCodigo(), imagen.getOriginalFilename());
-     * 
-     * Files.createDirectories(ruta.absolutePath.getParent());
-     * Files.write(ruta.absolutePath, imagen.getBytes());
-     * 
-     * productoGuardado.setImagenUrl("/" + ruta.relativeUrl.replace("\\", "/"));
-     * } else if (imagenUrl != null && !imagenUrl.isBlank()) {
-     * productoGuardado.setImagenUrl(imagenUrl);
-     * }
-     * 
-     * ProductoEntity productoFinal = oProductoRepository.save(productoGuardado);
-     * return ResponseEntity.status(HttpStatus.CREATED).body(productoFinal);
-     * 
-     * } catch (IOException e) {
-     * return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-     * .body(Collections.singletonMap("error", "Error al guardar la imagen."));
-     * } catch (Exception e) {
-     * return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-     * .body(Collections.singletonMap("error", "Ocurrió un error inesperado."));
-     * }
-     * }
-     */
     public ResponseEntity<?> updateProducto(Long codigo, String nombre, TipoproductoEntity tipoproducto,
             MultipartFile imagen, String imagenUrl) {
         try {
@@ -181,4 +154,9 @@ public class ProductoService {
         return oProductoRepository.findById(codigo)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
     }
+
+    public void deleteImagen(Long id) {
+        oProductoImagenRepository.deleteById(id);
+    }
+
 }

@@ -71,4 +71,11 @@ public class ProductoController {
             @RequestParam(value = "ImagenUrl", required = false) String imagenUrl) {
         return oProductoService.updateProducto(codigo, nombre, tipoProducto, imagen, imagenUrl);
     }
+
+    @DeleteMapping("/imagen/{id}")
+    public ResponseEntity<?> deleteImagen(@PathVariable Long id) {
+        oProductoService.deleteImagen(id);
+        return ResponseEntity.ok().build();
+    }
+
 }
