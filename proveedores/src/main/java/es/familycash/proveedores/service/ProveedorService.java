@@ -1,13 +1,10 @@
 package es.familycash.proveedores.service;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -18,10 +15,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import es.familycash.proveedores.entity.ProveedorEntity;
+import es.familycash.proveedores.entity.ProveedorImagenEntity;
 import es.familycash.proveedores.entity.TipoproveedorEntity;
 import es.familycash.proveedores.exception.ResourceNotFoundException;
 import es.familycash.proveedores.exception.UnauthorizedAccessException;
 import es.familycash.proveedores.helper.ImagePathResolver;
+import es.familycash.proveedores.repository.ProveedorImagenRepository;
 import es.familycash.proveedores.repository.ProveedorRepository;
 
 @Service
@@ -31,10 +30,12 @@ public class ProveedorService {
     ProveedorRepository oProveedorRepository;
 
     @Autowired
+    ProveedorImagenRepository oProveedorImagenRepository;
+
+    @Autowired
     AuthService oAuthService;
 
     public Page<ProveedorEntity> getPage(Pageable oPageable, Optional<String> filter) {
-
         if (filter.isPresent()) {
             return oProveedorRepository
                     .findByEmpresaContainingOrEmailContainingOrPasswordContaining(
@@ -63,9 +64,14 @@ public class ProveedorService {
         return oProveedorRepository.save(oProveedorEntity);
     }
 
-    public ResponseEntity<?> createProveedor(String empresa, String email, String password,
+    public ResponseEntity<?> createProveedor(
+            String empresa,
+            String email,
+            String password,
             TipoproveedorEntity tipoproveedor,
-            MultipartFile imagen, String imagenUrl) {
+            List<MultipartFile> imagen,
+            List<String> imagenUrl) {
+
         try {
             if (empresa == null || empresa.trim().isEmpty() ||
                     email == null || email.trim().isEmpty() ||
@@ -83,20 +89,39 @@ public class ProveedorService {
 
             ProveedorEntity proveedorGuardado = oProveedorRepository.save(nuevoProveedor);
 
-            if (imagen != null && !imagen.isEmpty()) {
-                ImagePathResolver.ImagePath ruta = ImagePathResolver.generate(
-                        "proveedor", proveedorGuardado.getId(), imagen.getOriginalFilename());
+            // Guardar imágenes por archivo
+            if (imagen != null) {
+                for (MultipartFile file : imagen) {
+                    if (file != null && !file.isEmpty()) {
+                        ImagePathResolver.ImagePath ruta = ImagePathResolver.generate(
+                                "proveedor", proveedorGuardado.getId(), file.getOriginalFilename());
 
-                Files.createDirectories(ruta.absolutePath.getParent());
-                Files.write(ruta.absolutePath, imagen.getBytes());
+                        Files.createDirectories(ruta.absolutePath.getParent());
+                        Files.write(ruta.absolutePath, file.getBytes());
 
-                proveedorGuardado.setImagenUrl("/" + ruta.relativeUrl.replace("\\", "/"));
-            } else if (imagenUrl != null && !imagenUrl.isBlank()) {
-                proveedorGuardado.setImagenUrl(imagenUrl);
+                        ProveedorImagenEntity imagenEntity = new ProveedorImagenEntity();
+                        imagenEntity.setProveedor(proveedorGuardado);
+                        imagenEntity.setImagenUrl("/" + ruta.relativeUrl.replace("\\", "/"));
+
+                        oProveedorImagenRepository.save(imagenEntity);
+                    }
+                }
             }
 
-            ProveedorEntity proveedorFinal = oProveedorRepository.save(proveedorGuardado);
-            return ResponseEntity.status(HttpStatus.CREATED).body(proveedorFinal);
+            // Guardar imágenes por URL
+            if (imagenUrl != null) {
+                for (String url : imagenUrl) {
+                    if (url != null && !url.trim().isEmpty()) {
+                        ProveedorImagenEntity imagenEntity = new ProveedorImagenEntity();
+                        imagenEntity.setProveedor(proveedorGuardado);
+                        imagenEntity.setImagenUrl(url.trim());
+
+                        oProveedorImagenRepository.save(imagenEntity);
+                    }
+                }
+            }
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(proveedorGuardado);
 
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -108,54 +133,93 @@ public class ProveedorService {
     }
 
     public ResponseEntity<?> updateProveedor(
-        Long id,
-        String empresa,
-        String email,
-        String password,
-        TipoproveedorEntity tipoproveedor,
-        MultipartFile imagen,
-        String imagenUrl) {
-    try {
-        ProveedorEntity proveedorExistente = oProveedorRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Proveedor no encontrado con ID: " + id));
+            Long id,
+            String empresa,
+            String email,
+            String password,
+            TipoproveedorEntity tipoproveedor,
+            List<MultipartFile> imagenes,
+            List<String> imagenesUrl) {
+        try {
+            ProveedorEntity proveedorExistente = oProveedorRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Proveedor no encontrado con ID: " + id));
 
-        proveedorExistente.setEmpresa(empresa);
-        proveedorExistente.setEmail(email);
-        proveedorExistente.setPassword(password);
-        proveedorExistente.setTipoproveedor(tipoproveedor);
+            proveedorExistente.setEmpresa(empresa);
+            proveedorExistente.setEmail(email);
+            proveedorExistente.setPassword(password);
+            proveedorExistente.setTipoproveedor(tipoproveedor);
 
-        // Si se sube un archivo de imagen, guardamos en disco
+            ProveedorEntity proveedorActualizado = oProveedorRepository.save(proveedorExistente);
+
+            // 💣 Eliminar imágenes anteriores si deseas sustituir completamente (opcional)
+            oProveedorImagenRepository.deleteById(proveedorExistente.getId());
+
+            // 📁 Guardar nuevas imágenes por archivo
+            if (imagenes != null) {
+                for (MultipartFile file : imagenes) {
+                    if (file != null && !file.isEmpty()) {
+                        ImagePathResolver.ImagePath ruta = ImagePathResolver.generate(
+                                "proveedor", proveedorExistente.getId(), file.getOriginalFilename());
+
+                        Files.createDirectories(ruta.absolutePath.getParent());
+                        Files.write(ruta.absolutePath, file.getBytes());
+
+                        ProveedorImagenEntity nueva = new ProveedorImagenEntity();
+                        nueva.setProveedor(proveedorExistente);
+                        nueva.setImagenUrl("/" + ruta.relativeUrl.replace("\\", "/"));
+
+                        oProveedorImagenRepository.save(nueva);
+                    }
+                }
+            }
+
+            // 🌐 Guardar imágenes por URL
+            if (imagenesUrl != null) {
+                for (String url : imagenesUrl) {
+                    if (url != null && !url.trim().isEmpty()) {
+                        ProveedorImagenEntity nueva = new ProveedorImagenEntity();
+                        nueva.setProveedor(proveedorExistente);
+                        nueva.setImagenUrl(url.trim());
+
+                        oProveedorImagenRepository.save(nueva);
+                    }
+                }
+            }
+
+            return ResponseEntity.status(HttpStatus.OK).body(proveedorActualizado);
+
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Error al guardar la imagen."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Ocurrió un error inesperado."));
+        }
+    }
+
+    private void guardarImagen(ProveedorEntity proveedor, MultipartFile imagen, String imagenUrl) throws IOException {
         if (imagen != null && !imagen.isEmpty()) {
             ImagePathResolver.ImagePath ruta = ImagePathResolver.generate(
-                    "proveedor", id, imagen.getOriginalFilename());
+                    "proveedor", proveedor.getId(), imagen.getOriginalFilename());
 
             Files.createDirectories(ruta.absolutePath.getParent());
             Files.write(ruta.absolutePath, imagen.getBytes());
 
-            proveedorExistente.setImagenUrl("/" + ruta.relativeUrl.replace("\\", "/"));
-            proveedorExistente.setImagen(null); // No se guarda binario
+            ProveedorImagenEntity nueva = new ProveedorImagenEntity();
+            nueva.setProveedor(proveedor);
+            nueva.setImagenUrl("/" + ruta.relativeUrl.replace("\\", "/"));
+            oProveedorImagenRepository.save(nueva);
         } else if (imagenUrl != null && !imagenUrl.isBlank()) {
-            // Si se da una URL válida
-            proveedorExistente.setImagenUrl(imagenUrl);
-            proveedorExistente.setImagen(null); // Limpiamos imagen binaria
-        } else {
-            // ❌ Si no hay ni archivo ni URL, limpiamos ambos campos
-            proveedorExistente.setImagen(null);
-            proveedorExistente.setImagenUrl(null);
+            ProveedorImagenEntity nueva = new ProveedorImagenEntity();
+            nueva.setProveedor(proveedor);
+            nueva.setImagenUrl(imagenUrl);
+            oProveedorImagenRepository.save(nueva);
         }
-
-        ProveedorEntity proveedorActualizado = oProveedorRepository.save(proveedorExistente);
-        return ResponseEntity.status(HttpStatus.OK).body(proveedorActualizado);
-
-    } catch (IOException e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Collections.singletonMap("error", "Error al subir la imagen."));
-    } catch (Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Collections.singletonMap("error", "Ocurrió un error inesperado."));
     }
-}
 
+    public void deleteImagen(Long id) {
+        oProveedorImagenRepository.deleteById(id);
+    }
 
     public Long deleteAll() {
         oProveedorRepository.deleteAll();
@@ -177,4 +241,6 @@ public class ProveedorService {
         }
     }
 
+
+    
 }
