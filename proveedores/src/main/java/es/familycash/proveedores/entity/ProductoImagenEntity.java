@@ -12,6 +12,7 @@ import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+
 @Entity
 @Table(name = "producto_imagen")
 public class ProductoImagenEntity {
@@ -21,11 +22,11 @@ public class ProductoImagenEntity {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "producto_codigo", referencedColumnName = "codigo")
+    @JoinColumn(name = "producto_id", referencedColumnName = "ara_id")
     @JsonBackReference
     private ProductoEntity producto;
 
-    @Column(length = 1000)
+    @Column(name = "imagenUrl")
     private String imagenUrl; // Si se usa URL para las imágenes
 
     @Lob
@@ -66,4 +67,4 @@ public class ProductoImagenEntity {
     // Getters and setters
 
 }
-
+ 

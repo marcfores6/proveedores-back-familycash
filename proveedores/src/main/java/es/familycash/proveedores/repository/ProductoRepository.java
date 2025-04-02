@@ -8,6 +8,6 @@ import es.familycash.proveedores.entity.ProductoEntity;
 
 public interface ProductoRepository extends JpaRepository<ProductoEntity, Long>{
 
-    Page<ProductoEntity> findByNombreContaining(String filter, Pageable pageable);
+    Page<ProductoEntity> findByDescripcionContaining(String filter, Pageable pageable);
     
 }

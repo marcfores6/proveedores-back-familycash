@@ -14,7 +14,7 @@ import es.familycash.proveedores.bean.ErrorBean;
 public class ApplicationExceptionHandler {
 
     @ExceptionHandler(value = Exception.class)
-    public ResponseEntity<ErrorBean> ApplicationExceptionHandler(Exception ex) {
+    public ResponseEntity<ErrorBean> ApplicationExceptionHandlerr(Exception ex) {
         ErrorBean oErrorBean = new ErrorBean();
         oErrorBean.setMessage(ex.getMessage());
         oErrorBean.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
