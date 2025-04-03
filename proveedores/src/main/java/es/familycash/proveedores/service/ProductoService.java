@@ -101,6 +101,7 @@ public class ProductoService {
         return oProductoRepository.save(producto);
     }
     
+    
     public ProductoEntity update(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls) throws IOException {
         ProductoEntity oProductoEntityFromDatabase = oProductoRepository.findById(producto.getId())
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado con id: " + producto.getId()));
@@ -158,51 +159,39 @@ public class ProductoService {
 
         // Procesar imágenes por archivo
         if (imagenes != null) {
-            StringBuilder imagenesGuardadas = new StringBuilder();
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    ImagePathResolver.ImagePath ruta = ImagePathResolver.generate("producto", oProductoEntityFromDatabase.getId(), file.getOriginalFilename());
+                    ImagePathResolver.ImagePath ruta = ImagePathResolver.generate(
+                        "producto", oProductoEntityFromDatabase.getId(), file.getOriginalFilename());
+        
                     Files.createDirectories(ruta.absolutePath.getParent());
-                    Files.write(ruta.absolutePath, file.getBytes());  // Aquí se puede lanzar IOException
-    
+                    Files.write(ruta.absolutePath, file.getBytes());
+        
                     ProductoImagenEntity imagenEntity = new ProductoImagenEntity();
                     imagenEntity.setProducto(oProductoEntityFromDatabase);
-                    imagenEntity.setImagenUrl("/" + ruta.relativeUrl.replace("\\", "/"));
+                    imagenEntity.setImagenUrl("/images/producto/" + oProductoEntityFromDatabase.getId() + "/" + file.getOriginalFilename());
                     oProductoImagenRepository.save(imagenEntity);
-    
-                    // Concatenar la URL de la imagen al campo ara_image
-                    if (imagenesGuardadas.length() > 0) {
-                        imagenesGuardadas.append(",");
-                    }
-                    imagenesGuardadas.append("/").append(ruta.relativeUrl.replace("\\", "/"));
                 }
             }
-            // Guardar las URLs de las imágenes en ara_image
-            oProductoEntityFromDatabase.setImagen(imagenesGuardadas.toString());
         }
+        
     
         // Procesar imágenes por URL
         if (imagenUrls != null) {
-            StringBuilder imagenesGuardadas = new StringBuilder();
             for (String url : imagenUrls) {
-                if (url != null && !url.trim().isEmpty()) {
+                if (url != null && !url.isBlank()) {
                     ProductoImagenEntity imagenEntity = new ProductoImagenEntity();
                     imagenEntity.setProducto(oProductoEntityFromDatabase);
                     imagenEntity.setImagenUrl(url.trim());
                     oProductoImagenRepository.save(imagenEntity);
-    
-                    // Concatenar la URL al campo ara_image
-                    if (imagenesGuardadas.length() > 0) {
-                        imagenesGuardadas.append(",");
-                    }
-                    imagenesGuardadas.append(url.trim());
                 }
             }
-            // Guardar las URLs de las imágenes en ara_image
-            oProductoEntityFromDatabase.setImagen(imagenesGuardadas.toString());
         }
+        
     
-        return oProductoRepository.save(oProductoEntityFromDatabase);
+        oProductoRepository.save(oProductoEntityFromDatabase);
+
+        return oProductoRepository.findById(producto.getId()).orElseThrow();
     }
 
     public Long deleteAll() {
