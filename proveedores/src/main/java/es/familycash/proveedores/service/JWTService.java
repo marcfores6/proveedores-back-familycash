@@ -61,7 +61,7 @@ public class JWTService {
             return null;
         }
         
-        return oClaims.get("email", String.class);
+        return oClaims.get("nif", String.class);
 
     }
 

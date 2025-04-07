@@ -19,14 +19,14 @@ public class AuthController {
     @Autowired
     AuthService oAuthService;
 
-    /*
+    
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginDataBean oLogindataBean) {
         if (oAuthService.checkLogin(oLogindataBean)) {
-            return ResponseEntity.ok("\"" + oAuthService.getToken(oLogindataBean.getEmail()) + "\"");
+            return ResponseEntity.ok("\"" + oAuthService.getToken(oLogindataBean.getNif()) + "\"");
         } else {
             return ResponseEntity.status(401).body("\"" + "Error de autenticación" + "\"");
         }
     }
-    */
+    
 }

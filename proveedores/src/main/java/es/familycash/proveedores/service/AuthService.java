@@ -7,9 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import es.familycash.proveedores.bean.LoginDataBean;
-//import es.familycash.proveedores.entity.ProveedorEntity;
+import es.familycash.proveedores.entity.ProveedorEntity;
 import es.familycash.proveedores.exception.UnauthorizedAccessException;
-//import es.familycash.proveedores.repository.ProveedorRepository;
+import es.familycash.proveedores.repository.ProveedorRepository;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Service
@@ -17,15 +17,15 @@ public class AuthService {
     @Autowired
     JWTService JWTHelper;
 
-    //@Autowired
-    //ProveedorRepository oProveedorRepository;
+    @Autowired
+    ProveedorRepository oProveedorRepository;
 
     @Autowired
     HttpServletRequest oHttpServletRequest;
 
-    /*
+    
     public boolean checkLogin(LoginDataBean oLogindataBean) {
-        if (oProveedorRepository.findByEmailAndPassword(oLogindataBean.getEmail(), oLogindataBean.getPassword())
+        if (oProveedorRepository.findByNifAndPassword(oLogindataBean.getNif(), oLogindataBean.getPassword())
                 .isPresent()) {
             return true;
         } else {
@@ -33,29 +33,30 @@ public class AuthService {
         }
     }
 
-    private Map<String, String> getClaims(String email) {
+    private Map<String, String> getClaims(String nif) {
         Map<String, String> claims = new HashMap<>();
-        claims.put("email", email);
+        claims.put("nif", nif);
         return claims;
     };
 
-    public String getToken(String email) {
-        return JWTHelper.generateToken(getClaims(email));
+    public String getToken(String nif) {
+        return JWTHelper.generateToken(getClaims(nif));
     }
 
     public ProveedorEntity getProveedorFromToken() {
-        if (oHttpServletRequest.getAttribute("email") == null) {
-            throw new UnauthorizedAccessException("No hay Proveedor en la sesión");
+        if (oHttpServletRequest.getAttribute("nif") == null) {
+            throw new UnauthorizedAccessException("No hay proveedor en la sesión");
         } else {
-            String email = oHttpServletRequest.getAttribute("email").toString();
-            return oProveedorRepository.findByEmail(email).get();
+            String nif = oHttpServletRequest.getAttribute("nif").toString();
+            return oProveedorRepository.findByNif(nif).get();
         }                
     }
 
     public boolean isSessionActive() {
-        return oHttpServletRequest.getAttribute("email") != null;
+        return oHttpServletRequest.getAttribute("nif") != null;
     }
 
+    /*
     public boolean isAdmin() {
         return this.getProveedorFromToken().getTipoproveedor().getId() == 1L;
     }
@@ -71,6 +72,6 @@ public class AuthService {
     public boolean isClientWithItsOwnData(Long id) {
         ProveedorEntity oProveedorEntity = this.getProveedorFromToken();
         return this.isClient() && oProveedorEntity.getId() == id;
-    }
-*/
+    }*/
+
 }

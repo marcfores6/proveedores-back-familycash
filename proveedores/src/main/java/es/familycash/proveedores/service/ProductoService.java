@@ -2,6 +2,8 @@ package es.familycash.proveedores.service;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,19 +15,27 @@ import org.springframework.web.multipart.MultipartFile;
 
 import es.familycash.proveedores.entity.ProductoEntity;
 import es.familycash.proveedores.entity.ProductoImagenEntity;
+import es.familycash.proveedores.entity.ProveedorEntity;
 import es.familycash.proveedores.helper.ImagePathResolver;
-import es.familycash.proveedores.repository.ProductoImagenRepository; 
+import es.familycash.proveedores.repository.ProductoImagenRepository;
 
 import es.familycash.proveedores.repository.ProductoRepository;
+import es.familycash.proveedores.repository.ProveedorRepository;
 
 @Service
 public class ProductoService {
 
     @Autowired
     ProductoRepository oProductoRepository;
-    
+
     @Autowired
     ProductoImagenRepository oProductoImagenRepository;
+
+    @Autowired
+    ProveedorRepository oProveedorRepository;
+
+    @Autowired
+    private AuthService authService;
 
     public Page<ProductoEntity> getPage(Pageable oPageable, Optional<String> filter) {
         if (filter.isPresent()) {
@@ -49,23 +59,25 @@ public class ProductoService {
         return 1L;
     }
 
-    public ProductoEntity create(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls) throws IOException {
+    public ProductoEntity create(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls)
+            throws IOException {
         ProductoEntity guardado = oProductoRepository.save(producto);
-    
+
         // Procesar imágenes por archivo
         if (imagenes != null) {
             StringBuilder imagenesGuardadas = new StringBuilder();
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    ImagePathResolver.ImagePath ruta = ImagePathResolver.generate("producto", guardado.getId(), file.getOriginalFilename());
+                    ImagePathResolver.ImagePath ruta = ImagePathResolver.generate("producto", guardado.getId(),
+                            file.getOriginalFilename());
                     Files.createDirectories(ruta.absolutePath.getParent());
-                    Files.write(ruta.absolutePath, file.getBytes());  // Aquí se puede lanzar IOException
-    
+                    Files.write(ruta.absolutePath, file.getBytes()); // Aquí se puede lanzar IOException
+
                     ProductoImagenEntity imagenEntity = new ProductoImagenEntity();
                     imagenEntity.setProducto(guardado);
                     imagenEntity.setImagenUrl("/" + ruta.relativeUrl.replace("\\", "/"));
                     oProductoImagenRepository.save(imagenEntity);
-    
+
                     // Concatenar la URL de la imagen al campo ara_image
                     if (imagenesGuardadas.length() > 0) {
                         imagenesGuardadas.append(",");
@@ -76,7 +88,7 @@ public class ProductoService {
             // Guardar las URLs de las imágenes en ara_image
             producto.setImagen(imagenesGuardadas.toString());
         }
-    
+
         // Procesar imágenes por URL
         if (imagenUrls != null) {
             StringBuilder imagenesGuardadas = new StringBuilder();
@@ -86,7 +98,7 @@ public class ProductoService {
                     imagenEntity.setProducto(guardado);
                     imagenEntity.setImagenUrl(url.trim());
                     oProductoImagenRepository.save(imagenEntity);
-    
+
                     // Concatenar la URL al campo ara_image
                     if (imagenesGuardadas.length() > 0) {
                         imagenesGuardadas.append(",");
@@ -97,15 +109,15 @@ public class ProductoService {
             // Guardar las URLs de las imágenes en ara_image
             producto.setImagen(imagenesGuardadas.toString());
         }
-    
+
         return oProductoRepository.save(producto);
     }
-    
-    
-    public ProductoEntity update(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls) throws IOException {
+
+    public ProductoEntity update(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls)
+            throws IOException {
         ProductoEntity oProductoEntityFromDatabase = oProductoRepository.findById(producto.getId())
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado con id: " + producto.getId()));
-    
+
         // Copiar valores del producto
         oProductoEntityFromDatabase.setDescripcion(producto.getDescripcion());
         oProductoEntityFromDatabase.setDescripcionTic(producto.getDescripcionTic());
@@ -156,26 +168,25 @@ public class ProductoService {
         oProductoEntityFromDatabase.setPartidaArancelaria(producto.getPartidaArancelaria());
         oProductoEntityFromDatabase.setPaisOrigen(producto.getPaisOrigen());
 
-
         // Procesar imágenes por archivo
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
                     ImagePathResolver.ImagePath ruta = ImagePathResolver.generate(
-                        "producto", oProductoEntityFromDatabase.getId(), file.getOriginalFilename());
-        
+                            "producto", oProductoEntityFromDatabase.getId(), file.getOriginalFilename());
+
                     Files.createDirectories(ruta.absolutePath.getParent());
                     Files.write(ruta.absolutePath, file.getBytes());
-        
+
                     ProductoImagenEntity imagenEntity = new ProductoImagenEntity();
                     imagenEntity.setProducto(oProductoEntityFromDatabase);
-                    imagenEntity.setImagenUrl("/images/producto/" + oProductoEntityFromDatabase.getId() + "/" + file.getOriginalFilename());
+                    imagenEntity.setImagenUrl("/images/producto/" + oProductoEntityFromDatabase.getId() + "/"
+                            + file.getOriginalFilename());
                     oProductoImagenRepository.save(imagenEntity);
                 }
             }
         }
-        
-    
+
         // Procesar imágenes por URL
         if (imagenUrls != null) {
             for (String url : imagenUrls) {
@@ -187,8 +198,7 @@ public class ProductoService {
                 }
             }
         }
-        
-    
+
         oProductoRepository.save(oProductoEntityFromDatabase);
 
         return oProductoRepository.findById(producto.getId()).orElseThrow();
@@ -205,7 +215,38 @@ public class ProductoService {
     }
 
     public void deleteImagen(Long id) {
-        oProductoImagenRepository.deleteById(id);
+        ProductoImagenEntity imagen = oProductoImagenRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Imagen no encontrada con id: " + id));
+
+        String imagenUrl = imagen.getImagenUrl();
+
+        // Solo eliminamos el archivo si la imagen está en el sistema de archivos (no es
+        // URL externa)
+        if (imagenUrl != null && imagenUrl.startsWith("/images/")) {
+            String baseFolder = "C:\\imagenes-familycash";
+            Path rutaCompleta = Paths.get(baseFolder, imagenUrl.replaceFirst("/", "").replace("/", "\\"));
+
+            try {
+                boolean deleted = Files.deleteIfExists(rutaCompleta);
+                if (deleted) {
+                    System.out.println("🗑️ Imagen eliminada físicamente: " + rutaCompleta);
+                } else {
+                    System.out.println("⚠️ No se encontró la imagen para eliminar: " + rutaCompleta);
+                }
+            } catch (IOException e) {
+                System.err.println("❌ Error eliminando la imagen del disco: " + e.getMessage());
+            }
+        } else {
+            System.out.println("🌐 Imagen externa no eliminada físicamente: " + imagenUrl);
+        }
+
+        // Finalmente, eliminamos la entrada de la base de datos
+        oProductoImagenRepository.delete(imagen);
+    }
+
+    public Page<ProductoEntity> getPageByProveedor(Pageable pageable, String proveedorId) {
+        return oProductoRepository.findByProveedor(proveedorId, pageable);
     }
     
+
 }

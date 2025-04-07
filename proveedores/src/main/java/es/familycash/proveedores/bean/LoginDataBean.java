@@ -10,7 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LoginDataBean {
-    private String email;
+    private String nif;
     private String password;
 }
 

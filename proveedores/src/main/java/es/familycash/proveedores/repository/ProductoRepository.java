@@ -10,4 +10,6 @@ public interface ProductoRepository extends JpaRepository<ProductoEntity, Long>{
 
     Page<ProductoEntity> findByDescripcionContaining(String filter, Pageable pageable);
     
+    Page<ProductoEntity> findByProveedor(String proveedorId, Pageable pageable);
+
 }
