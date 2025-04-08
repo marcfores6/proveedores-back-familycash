@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class AuthService {
+
     @Autowired
     JWTService JWTHelper;
 
@@ -23,55 +24,43 @@ public class AuthService {
     @Autowired
     HttpServletRequest oHttpServletRequest;
 
-    
-    public boolean checkLogin(LoginDataBean oLogindataBean) {
-        if (oProveedorRepository.findByNifAndPassword(oLogindataBean.getNif(), oLogindataBean.getPassword())
-                .isPresent()) {
-            return true;
-        } else {
-            return false;
-        }
+    public boolean checkLogin(LoginDataBean loginData) {
+        return oProveedorRepository.findById(loginData.getProveedorId())
+        .filter(p -> p.getNif().equals(loginData.getNif()))
+        .filter(p -> p.getPassword().equals(loginData.getPassword()))
+        .isPresent();
     }
 
-    private Map<String, String> getClaims(String nif) {
+    private Map<String, String> getClaims(ProveedorEntity proveedor) {
         Map<String, String> claims = new HashMap<>();
-        claims.put("nif", nif);
+        claims.put("nif", proveedor.getNif());
+        claims.put("proveedorId", proveedor.getId().toString());
         return claims;
-    };
-
-    public String getToken(String nif) {
-        return JWTHelper.generateToken(getClaims(nif));
     }
 
+    public String getToken(String nif, Long proveedorId) {
+        ProveedorEntity proveedor = oProveedorRepository.findById(proveedorId)
+            .filter(p -> p.getNif().equals(nif))
+            .orElseThrow();
+        return JWTHelper.generateToken(getClaims(proveedor));
+    }
+    
     public ProveedorEntity getProveedorFromToken() {
-        if (oHttpServletRequest.getAttribute("nif") == null) {
-            throw new UnauthorizedAccessException("No hay proveedor en la sesión");
-        } else {
-            String nif = oHttpServletRequest.getAttribute("nif").toString();
-            return oProveedorRepository.findByNif(nif).get();
-        }                
+        Object nifAttr = oHttpServletRequest.getAttribute("nif");
+        if (nifAttr == null) throw new UnauthorizedAccessException("No hay proveedor en la sesión");
+        String nif = nifAttr.toString();
+        return oProveedorRepository.findByNif(nif).orElseThrow();
     }
+
+    public ProveedorEntity getProveedorFromTokenId() {
+        Object proveedorIdAttr = oHttpServletRequest.getAttribute("proveedorId");
+        if (proveedorIdAttr == null) throw new UnauthorizedAccessException("No hay proveedor en la sesión");
+        Long proveedorId = Long.parseLong(proveedorIdAttr.toString());
+        return oProveedorRepository.findById(proveedorId).orElseThrow();
+    }
+    
 
     public boolean isSessionActive() {
         return oHttpServletRequest.getAttribute("nif") != null;
     }
-
-    /*
-    public boolean isAdmin() {
-        return this.getProveedorFromToken().getTipoproveedor().getId() == 1L;
-    }
-
-    public boolean isClient() {
-        return this.getProveedorFromToken().getTipoproveedor().getId() == 2L;
-    }
-
-    public boolean isAdminOrClient() {
-        return this.isAdmin() || this.isClient();
-    }
-
-    public boolean isClientWithItsOwnData(Long id) {
-        ProveedorEntity oProveedorEntity = this.getProveedorFromToken();
-        return this.isClient() && oProveedorEntity.getId() == id;
-    }*/
-
 }

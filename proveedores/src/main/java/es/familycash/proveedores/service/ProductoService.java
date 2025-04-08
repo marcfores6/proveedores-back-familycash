@@ -21,6 +21,7 @@ import es.familycash.proveedores.repository.ProductoImagenRepository;
 
 import es.familycash.proveedores.repository.ProductoRepository;
 import es.familycash.proveedores.repository.ProveedorRepository;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class ProductoService {
@@ -35,7 +36,7 @@ public class ProductoService {
     ProveedorRepository oProveedorRepository;
 
     @Autowired
-    private AuthService authService;
+    private HttpServletRequest oHttpServletRequest;
 
     public Page<ProductoEntity> getPage(Pageable oPageable, Optional<String> filter) {
         if (filter.isPresent()) {
@@ -245,8 +246,12 @@ public class ProductoService {
     }
 
     public Page<ProductoEntity> getPageByProveedor(Pageable pageable, String proveedorId) {
-        return oProductoRepository.findByProveedor(proveedorId, pageable);
+        String proveedorIdFormatted = String.format("%05d", Integer.parseInt(proveedorId));
+        return oProductoRepository.findByProveedor(proveedorIdFormatted, pageable);
     }
+    
+    
+    
     
 
 }

@@ -12,5 +12,6 @@ import lombok.Setter;
 public class LoginDataBean {
     private String nif;
     private String password;
+    private Long proveedorId;
 }
 

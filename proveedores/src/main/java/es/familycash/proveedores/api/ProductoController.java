@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import es.familycash.proveedores.entity.ProductoEntity;
 import es.familycash.proveedores.entity.ProveedorEntity;
+import es.familycash.proveedores.repository.ProductoRepository;
 import es.familycash.proveedores.repository.ProveedorRepository;
 import es.familycash.proveedores.service.AuthService;
 import es.familycash.proveedores.service.ProductoService;
@@ -45,11 +46,24 @@ public class ProductoController {
     ProveedorRepository oProveedorRepository;
 
     @Autowired
+    ProductoRepository oProductoRepository;
+
+    @Autowired
+    HttpServletRequest oHttpServletRequest;
+
+    @Autowired
     AuthService oAuthService;
 
     @GetMapping("")
     public ResponseEntity<Page<ProductoEntity>> getPage(Pageable oPageable, @RequestParam Optional<String> filter) {
         return new ResponseEntity<>(oProductoService.getPage(oPageable, filter), HttpStatus.OK);
+    }
+
+    @GetMapping("/pagebyproveedor")
+    public ResponseEntity<Page<ProductoEntity>> getPageByProveedor(Pageable pageable, HttpServletRequest request) {
+        String proveedorId = (String) request.getAttribute("proveedorId");
+        Page<ProductoEntity> page = oProductoService.getPageByProveedor(pageable, proveedorId);
+        return new ResponseEntity<>(page, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
@@ -285,13 +299,6 @@ public class ProductoController {
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
-    @GetMapping("/pagebyproveedor")
-    public ResponseEntity<Page<ProductoEntity>> getPageByProveedor(
-            Pageable pageable,
-            HttpServletRequest request) {
-                String proveedorId = (String) request.getAttribute("proveedorId");
-                Page<ProductoEntity> page = oProductoService.getPageByProveedor(pageable, proveedorId);
-                return new ResponseEntity<>(page, HttpStatus.OK);
-    }
+   
 
 }

@@ -5,6 +5,8 @@ import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import es.familycash.proveedores.service.JWTService;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -12,7 +14,6 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import es.familycash.proveedores.service.JWTService;
 
 @Component
 public class JWTFilter implements Filter {
@@ -21,44 +22,53 @@ public class JWTFilter implements Filter {
     JWTService JWTHelper;
 
     @Override
-    public void doFilter(ServletRequest oServletRequest,
-            ServletResponse oServletReponse,
-            FilterChain oFilterChain)
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
 
-        HttpServletRequest oHttpServletRequest = (HttpServletRequest) oServletRequest;
-        HttpServletResponse oHttpServletResponse = (HttpServletResponse) oServletReponse;
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        if ("OPTIONS".equals(oHttpServletRequest.getMethod())) {
-            oHttpServletResponse.setStatus(HttpServletResponse.SC_OK);
-            oFilterChain.doFilter(oServletRequest, oServletReponse);
-        } else {
-            String sToken = oHttpServletRequest.getHeader("Authorization");
-            if (sToken == null) {
-                // oHttpServletResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token no
-                // válido");
-                // return;
-                oFilterChain.doFilter(oServletRequest, oServletReponse);
-            } else {
-                if (!sToken.startsWith("Bearer ")) {
-                    oHttpServletResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token no válido");
-                    return;
-                } else {
-                    String sTokenReal = sToken.substring(7);
+        String path = httpRequest.getRequestURI();
 
-                    String email = JWTHelper.validateToken(sTokenReal);
-
-                    if (email == null) {
-                        oHttpServletResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token no válido");
-                        return;
-                    } else {
-                        oHttpServletRequest.setAttribute("email", email);
-                        oFilterChain.doFilter(oServletRequest, oServletReponse);
-                    }
-                }
-
-            }
-
+        if (path.startsWith("/auth/")) {
+            chain.doFilter(request, response);
+            return;
         }
+
+        if ("OPTIONS".equals(httpRequest.getMethod())) {
+            httpResponse.setStatus(HttpServletResponse.SC_OK);
+            chain.doFilter(request, response);
+            return;
+        }
+
+        String tokenHeader = httpRequest.getHeader("Authorization");
+
+        if (tokenHeader == null || !tokenHeader.startsWith("Bearer ")) {
+            chain.doFilter(request, response); // Dejamos pasar, el propio endpoint protegerá si es necesario
+            return;
+        }
+
+        String token = tokenHeader.substring(7);
+
+        try {
+            String nif = JWTHelper.validateToken(token);
+            if (nif == null) {
+                httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token no válido o expirado");
+                return;
+            }
+        
+            Claims claims = JWTHelper.getAllClaimsFromToken(token);
+            httpRequest.setAttribute("nif", claims.get("nif", String.class));
+            httpRequest.setAttribute("proveedorId", claims.get("proveedorId", String.class));
+        
+        } catch (Exception e) {
+            e.printStackTrace(); // 🔍 Importante para que veas el error exacto en consola
+            httpResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token no válido o expirado");
+            return;
+        }
+        
+        
+
+        chain.doFilter(request, response);
     }
 }

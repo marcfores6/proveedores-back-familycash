@@ -76,7 +76,7 @@ public class ProductoEntity {
     @Column(name = "ara_cajas_palet")
     private Integer cajasPalet;
 
-    @Column(name = "ara_pro")
+    @Column(name = "ARA_PRO")
     private String proveedor;// PREGUNTAR;
 
     @Column(name = "ara_pro_ref")

@@ -1,5 +1,6 @@
 package es.familycash.proveedores.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -17,6 +18,10 @@ public interface ProveedorRepository extends JpaRepository<ProveedorEntity, Long
     Optional<ProveedorEntity> findByNif(String nif);
 
     Optional<ProveedorEntity> findByNifAndPassword(String nif, String password);
+    
     Page<ProveedorEntity> findByNif(String filter, Pageable pageable);
+
+    List<ProveedorEntity> findAllByNif(String nif);
+
     
 }

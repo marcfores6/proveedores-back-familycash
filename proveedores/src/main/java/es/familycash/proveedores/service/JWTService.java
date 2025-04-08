@@ -1,68 +1,72 @@
 package es.familycash.proveedores.service;
 
-import java.util.Date;
-import java.util.Map;
-import java.util.UUID;
-import javax.crypto.SecretKey;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 
+import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import java.util.Date;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class JWTService {
 
     @Value("${jwt.subject}")
     private String SUBJECT;
+
     @Value("${jwt.issuer}")
     private String ISSUER;
+
     @Value("${jwt.secret}")
     private String secretKey;
 
-    private SecretKey getSecretKey() {    
+    private SecretKey getSecretKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
     public String generateToken(Map<String, String> claims) {
         return Jwts.builder()
-                .id(UUID.randomUUID().toString())
-                .claims(claims)
-                .subject(SUBJECT)
-                .issuer(ISSUER)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 6000000))
-                .signWith(getSecretKey(), Jwts.SIG.HS256)
+                .setId(UUID.randomUUID().toString())
+                .setClaims(claims)
+                .setSubject(SUBJECT)
+                .setIssuer(ISSUER)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 6000000))
+                .signWith(getSecretKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    private Claims getAllClaimsFromToken(String token) {
-        return Jwts.parser().verifyWith(getSecretKey()).build().parseSignedClaims(token).getPayload();
+    public Claims getAllClaimsFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSecretKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 
-    public String validateToken(String sToken) {
-        Claims oClaims = getAllClaimsFromToken(sToken);
+    public String validateToken(String token) {
+        Claims claims = getAllClaimsFromToken(token);
 
-        if (oClaims.getExpiration().before(new Date())) {
+        if (claims.getExpiration().before(new Date()))
             return null;
-        }
-
-        if (oClaims.getIssuedAt().after(new Date())) {
+        // if (claims.getIssuedAt().after(new Date())) return null;
+        if (!claims.getIssuer().equals(ISSUER))
             return null;
-        }        
-
-        if (!oClaims.getIssuer().equals(ISSUER)) {
+        if (!claims.getSubject().equals(SUBJECT))
             return null;
-        }
 
-        if (!oClaims.getSubject().equals(SUBJECT)) {
-            return null;
-        }
-        
-        return oClaims.get("nif", String.class);
+        return claims.get("nif", String.class);
+    }
 
+    @PostConstruct
+    public void init() {
+        System.out.println("🚀 Clave secreta cargada en JWTService: " + secretKey);
     }
 
 }
