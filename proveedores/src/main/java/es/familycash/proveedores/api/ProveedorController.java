@@ -61,4 +61,10 @@ public class ProveedorController {
     public ResponseEntity<ProveedorEntity> getByNif(@PathVariable String nif) {
         return new ResponseEntity<>(oProveedorService.getByNif(nif), HttpStatus.OK);
     }
+
+    @GetMapping("/bytoken")
+    public ResponseEntity<ProveedorEntity> getProveedorFromToken() {
+        return new ResponseEntity<>(oProveedorService.getProveedorFromToken(), HttpStatus.OK);
+    }
+
 }

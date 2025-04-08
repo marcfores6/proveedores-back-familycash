@@ -8,14 +8,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import es.familycash.proveedores.entity.ProveedorEntity;
-import es.familycash.proveedores.entity.ProveedorEntity;
 import es.familycash.proveedores.repository.ProveedorRepository;
 
 @Service
 public class ProveedorService {
-    
+
     @Autowired
     ProveedorRepository oProveedorRepository;
+
+    @Autowired
+    AuthService oAuthService;
 
     public Page<ProveedorEntity> getPage(Pageable oPageable, Optional<String> filter) {
         if (filter.isPresent()) {
@@ -66,5 +68,9 @@ public class ProveedorService {
         return oProveedorRepository.findByNif(nif)
                 .orElseThrow(() -> new RuntimeException("Proveedor no encontrado con NIF: " + nif));
     }
-    
+
+    public ProveedorEntity getProveedorFromToken() {
+        return oAuthService.getProveedorFromToken();
+    }
+
 }

@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import es.familycash.proveedores.entity.ProductoEntity;
-import es.familycash.proveedores.entity.ProveedorEntity;
 import es.familycash.proveedores.repository.ProductoRepository;
 import es.familycash.proveedores.repository.ProveedorRepository;
 import es.familycash.proveedores.service.AuthService;

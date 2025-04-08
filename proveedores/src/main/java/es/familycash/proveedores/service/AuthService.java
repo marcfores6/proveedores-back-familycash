@@ -44,15 +44,8 @@ public class AuthService {
             .orElseThrow();
         return JWTHelper.generateToken(getClaims(proveedor));
     }
-    
-    public ProveedorEntity getProveedorFromToken() {
-        Object nifAttr = oHttpServletRequest.getAttribute("nif");
-        if (nifAttr == null) throw new UnauthorizedAccessException("No hay proveedor en la sesión");
-        String nif = nifAttr.toString();
-        return oProveedorRepository.findByNif(nif).orElseThrow();
-    }
 
-    public ProveedorEntity getProveedorFromTokenId() {
+    public ProveedorEntity getProveedorFromToken() {
         Object proveedorIdAttr = oHttpServletRequest.getAttribute("proveedorId");
         if (proveedorIdAttr == null) throw new UnauthorizedAccessException("No hay proveedor en la sesión");
         Long proveedorId = Long.parseLong(proveedorIdAttr.toString());

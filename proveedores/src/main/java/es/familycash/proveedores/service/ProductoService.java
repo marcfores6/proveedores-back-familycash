@@ -15,13 +15,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import es.familycash.proveedores.entity.ProductoEntity;
 import es.familycash.proveedores.entity.ProductoImagenEntity;
-import es.familycash.proveedores.entity.ProveedorEntity;
 import es.familycash.proveedores.helper.ImagePathResolver;
 import es.familycash.proveedores.repository.ProductoImagenRepository;
 
 import es.familycash.proveedores.repository.ProductoRepository;
 import es.familycash.proveedores.repository.ProveedorRepository;
-import jakarta.servlet.http.HttpServletRequest;
 
 @Service
 public class ProductoService {
@@ -34,9 +32,6 @@ public class ProductoService {
 
     @Autowired
     ProveedorRepository oProveedorRepository;
-
-    @Autowired
-    private HttpServletRequest oHttpServletRequest;
 
     public Page<ProductoEntity> getPage(Pageable oPageable, Optional<String> filter) {
         if (filter.isPresent()) {
