@@ -64,9 +64,4 @@ public class JWTService {
         return claims.get("nif", String.class);
     }
 
-    @PostConstruct
-    public void init() {
-        System.out.println("🚀 Clave secreta cargada en JWTService: " + secretKey);
-    }
-
 }

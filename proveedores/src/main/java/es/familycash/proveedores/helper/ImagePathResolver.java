@@ -7,11 +7,11 @@ import java.nio.file.Paths;
 
 public class ImagePathResolver {
 
-    private static final String BASE_FOLDER = "C:\\imagenes-familycash\\images";
+    private static final String BASE_FOLDER = "C:/Users/mfores/Desktop/proveedores intranet/proveedores-back-familycash/proveedores/imagenes-familycash/images";
 
     public static class ImagePath {
-        public final Path absolutePath;   // Ruta física en disco
-        public final String relativeUrl;  // Ruta para la BD / frontend
+        public final Path absolutePath; // Ruta física en disco
+        public final String relativeUrl; // Ruta para la BD / frontend
 
         public ImagePath(Path absolutePath, String relativeUrl) {
             this.absolutePath = absolutePath;
@@ -20,16 +20,10 @@ public class ImagePathResolver {
     }
 
     public static ImagePath generate(String entityType, Long entityId, String originalFilename) {
-        // Reemplazamos espacios por guiones bajos para evitar problemas en URL
         String cleanFileName = originalFilename.replaceAll("\\s+", "_");
-
-        // Ruta relativa para servir desde el frontend
         String relativeUrl = "/images/" + entityType + "/" + entityId + "/" + cleanFileName;
-
-        // Ruta absoluta donde guardar el archivo en el sistema de archivos
         Path absolutePath = Paths.get(BASE_FOLDER, entityType, String.valueOf(entityId), cleanFileName);
 
-        // Crear directorio si no existe
         try {
             Files.createDirectories(absolutePath.getParent());
             System.out.println("📁 Carpeta creada: " + absolutePath.getParent());
