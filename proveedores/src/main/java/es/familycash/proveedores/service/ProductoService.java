@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -251,37 +252,42 @@ public class ProductoService {
         return oProductoRepository.findByProveedor(proveedorIdFormatted, pageable);
     }
 
-    public void guardarDocumentosDelProducto(Long productoId, List<MultipartFile> documentos) throws IOException {
-        if (documentos == null || documentos.isEmpty()) {
-            return;
-        }
-    
-        String uploadDir = "src/main/resources/static/docs/producto/" + productoId + "/";
-    
-        // Crear el directorio si no existe
-        Files.createDirectories(Paths.get(uploadDir));
-    
-        for (MultipartFile documento : documentos) {
-            String originalFilename = documento.getOriginalFilename();
-            String filePath = uploadDir + originalFilename;
-    
-            // Guardar el archivo en el sistema de archivos
-            Path path = Paths.get(filePath);
-            Files.write(path, documento.getBytes());
-    
-            // Crear la entidad ProductoEntity para la referencia
-            ProductoEntity producto = new ProductoEntity();
-            producto.setId(productoId);
-    
-            // Guardar la referencia del documento en la base de datos
-            ProductoDocumentoEntity documentoEntity = new ProductoDocumentoEntity();
-            documentoEntity.setProducto(producto); // ✅ Asignamos la entidad, no el id
-            documentoEntity.setDocumentoUrl("/docs/producto/" + productoId + "/" + originalFilename);
-            documentoEntity.setNombreOriginal(originalFilename);
-    
-            oProductoDocumentoRepository.save(documentoEntity);
-        }
+    public void guardarDocumentosDelProducto(ProductoEntity producto, List<MultipartFile> documentos) throws IOException {
+    if (documentos == null || documentos.isEmpty()) {
+        return;
     }
+
+    // 🧩 Ruta base que quieres, respetando tu configuración Spring para los estáticos
+    String baseFolder = "./proveedores/imagenes-familycash/images/docs/producto/" + producto.getId() + "/";
+
+    // Crear el directorio si no existe
+    Files.createDirectories(Paths.get(baseFolder));
+
+    // Lista de entidades para guardar en lote
+    List<ProductoDocumentoEntity> documentosParaGuardar = new ArrayList<>();
+
+    for (MultipartFile documento : documentos) {
+        String originalFilename = documento.getOriginalFilename();
+        String filePath = baseFolder + originalFilename;
+
+        // Guardar el archivo en el sistema de archivos
+        Path path = Paths.get(filePath);
+        Files.write(path, documento.getBytes());
+
+        // Crear entidad y añadir a la lista para guardar en la base de datos
+        ProductoDocumentoEntity documentoEntity = new ProductoDocumentoEntity();
+        documentoEntity.setProducto(producto);
+        documentoEntity.setDocumentoUrl("/docs/producto/" + producto.getId() + "/" + originalFilename); // Relativa para el frontend
+        documentoEntity.setNombreOriginal(originalFilename);
+
+        documentosParaGuardar.add(documentoEntity);
+    }
+
+    // Guardar todos los documentos de una sola vez en la base de datos
+    oProductoDocumentoRepository.saveAll(documentosParaGuardar);
+}
+
+    
     
 
     public List<ProductoDocumentoEntity> obtenerDocumentosDeProducto(Long productoId) {

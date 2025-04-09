@@ -252,7 +252,8 @@ public class ProductoController {
             @RequestParam(value = "insertedAt", required = false) String insertedAtStr,
             @RequestParam(value = "updateAt", required = false) String updateAtStr,
             @RequestParam(value = "imagenUrls", required = false) List<String> imagenUrls,
-            @RequestPart(value = "imagenes", required = false) List<MultipartFile> imagenes) throws IOException {
+            @RequestPart(value = "imagenes", required = false) List<MultipartFile> imagenes,
+            @RequestPart(value = "documentos", required = false) List<MultipartFile> documentos) throws IOException {
         ProductoEntity producto = new ProductoEntity();
 
         producto.setId(id);
@@ -313,6 +314,11 @@ public class ProductoController {
         }
 
         ProductoEntity updated = oProductoService.update(producto, imagenes, imagenUrls);
+
+       
+        ProductoEntity productoCompleto = oProductoService.findById(id);
+        oProductoService.guardarDocumentosDelProducto(productoCompleto, documentos);
+
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
@@ -321,7 +327,8 @@ public class ProductoController {
             @PathVariable Long id,
             @RequestPart("documentos") List<MultipartFile> documentos) {
         try {
-            oProductoService.guardarDocumentosDelProducto(id, documentos);
+            ProductoEntity producto = oProductoService.findById(id);
+            oProductoService.guardarDocumentosDelProducto(producto, documentos);
             return ResponseEntity.ok("Documentos subidos correctamente");
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

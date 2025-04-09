@@ -179,6 +179,7 @@ public class ProductoEntity {
     private List<ProductoImagenEntity> imagenes = new ArrayList<>();
 
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<ProductoDocumentoEntity> documentos = new ArrayList<>();
 
 }
