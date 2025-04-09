@@ -1,5 +1,6 @@
 package es.familycash.proveedores.entity;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,8 +51,8 @@ public class ProductoEntity {
     @Column(name = "ara_udm_id")
     private String unidadDeMedida;
 
-    @Column(name = "ara_udm_ctd")
-    private Integer cantidad;
+    @Column(name = "ara_udm_ctd", precision = 7, scale = 3)
+    private BigDecimal cantidad;
 
     @Column(name = "ara_cent")
     private String centralizado;
@@ -98,8 +99,8 @@ public class ProductoEntity {
     @Column(name = "ara_alto_c")
     private Integer alto;
 
-    @Column(name = "ara_peso_c")
-    private Integer peso;
+    @Column(name = "ara_peso_c", precision = 7, scale = 3)
+    private BigDecimal peso;
 
     @Column(name = "ara_dias_cad")
     private Integer diasCaducidad;
@@ -110,32 +111,32 @@ public class ProductoEntity {
     @Column(name = "ara_iva")
     private String iva;
 
-    @Column(name = "ara_pvp")
-    private Integer precioVenta;
+    @Column(name = "ara_pvp", precision = 12, scale = 4)
+    private BigDecimal precioVenta;
 
-    @Column(name = "ara_pvp_hom")
-    private Integer pvp_hom;// PREGUNTAR;
+    @Column(name = "ara_pvp_hom", precision = 12, scale = 4)
+    private BigDecimal pvp_hom;// PREGUNTAR;
 
-    @Column(name = "ara_pvp_and")
-    private Integer pvp_and;// PREGUNTAR;
+    @Column(name = "ara_pvp_and", precision = 12, scale = 4)
+    private BigDecimal pvp_and;// PREGUNTAR;
 
-    @Column(name = "ara_pvp_cat")
-    private Integer pvp_cat;// PREGUNTAR;
+    @Column(name = "ara_pvp_cat", precision = 12, scale = 4)
+    private BigDecimal pvp_cat;// PREGUNTAR;
 
-    @Column(name = "ara_pro_tar")
-    private Integer precioTarifa;
+    @Column(name = "ara_pro_tar", precision = 12, scale = 4)
+    private BigDecimal precioTarifa;
 
     @Column(name = "ara_pro_fac")
     private String pro_fac;// PREGUNTAR;
 
-    @Column(name = "ara_pro_neto")
-    private Integer precioNeto;
+    @Column(name = "ara_pro_neto", precision = 12, scale = 4)
+    private BigDecimal precioNeto;
 
     @Column(name = "ara_pro_ffac")
     private String pro_ffac;// PREGUNTAR;
 
-    @Column(name = "ara_pro_neton")
-    private Integer pro_neton;// PREGUNTAR;
+    @Column(name = "ara_pro_neton", precision = 12, scale = 4)
+    private BigDecimal pro_neton;// PREGUNTAR;
 
     @Column(name = "ara_art_mkd")
     private String art_mkd;// PREGUNTAR;
@@ -167,8 +168,8 @@ public class ProductoEntity {
     @Column(name = "ara_part_arancel")
     private String partidaArancelaria;
 
-    @Column(name = "ara_pvp_mel")
-    private Integer pvp_mel;// PREGUNTAR;
+    @Column(name = "ara_pvp_mel", precision = 12, scale = 4)
+    private BigDecimal pvp_mel;// PREGUNTAR;
 
     @Column(name = "pais_origen")
     private String paisOrigen;
@@ -176,5 +177,8 @@ public class ProductoEntity {
     @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<ProductoImagenEntity> imagenes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "producto", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductoDocumentoEntity> documentos = new ArrayList<>();
 
 }

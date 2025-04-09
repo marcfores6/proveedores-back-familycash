@@ -13,16 +13,22 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import es.familycash.proveedores.entity.ProductoDocumentoEntity;
 import es.familycash.proveedores.entity.ProductoEntity;
 import es.familycash.proveedores.entity.ProductoImagenEntity;
 import es.familycash.proveedores.helper.ImagePathResolver;
+import es.familycash.proveedores.repository.ProductoDocumentoRepository;
 import es.familycash.proveedores.repository.ProductoImagenRepository;
 
 import es.familycash.proveedores.repository.ProductoRepository;
 import es.familycash.proveedores.repository.ProveedorRepository;
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class ProductoService {
+
+    @Autowired
+    ProductoDocumentoRepository oProductoDocumentoRepository;
 
     @Autowired
     ProductoRepository oProductoRepository;
@@ -244,9 +250,55 @@ public class ProductoService {
         String proveedorIdFormatted = String.format("%05d", Integer.parseInt(proveedorId));
         return oProductoRepository.findByProveedor(proveedorIdFormatted, pageable);
     }
+
+    public void guardarDocumentosDelProducto(Long productoId, List<MultipartFile> documentos) throws IOException {
+        if (documentos == null || documentos.isEmpty()) {
+            return;
+        }
     
+        String uploadDir = "src/main/resources/static/docs/producto/" + productoId + "/";
     
+        // Crear el directorio si no existe
+        Files.createDirectories(Paths.get(uploadDir));
     
+        for (MultipartFile documento : documentos) {
+            String originalFilename = documento.getOriginalFilename();
+            String filePath = uploadDir + originalFilename;
     
+            // Guardar el archivo en el sistema de archivos
+            Path path = Paths.get(filePath);
+            Files.write(path, documento.getBytes());
+    
+            // Crear la entidad ProductoEntity para la referencia
+            ProductoEntity producto = new ProductoEntity();
+            producto.setId(productoId);
+    
+            // Guardar la referencia del documento en la base de datos
+            ProductoDocumentoEntity documentoEntity = new ProductoDocumentoEntity();
+            documentoEntity.setProducto(producto); // ✅ Asignamos la entidad, no el id
+            documentoEntity.setDocumentoUrl("/docs/producto/" + productoId + "/" + originalFilename);
+            documentoEntity.setNombreOriginal(originalFilename);
+    
+            oProductoDocumentoRepository.save(documentoEntity);
+        }
+    }
+    
+
+    public List<ProductoDocumentoEntity> obtenerDocumentosDeProducto(Long productoId) {
+        return oProductoDocumentoRepository.findByProductoId(productoId);
+    }
+
+    public void eliminarDocumento(Long documentoId) throws IOException {
+    ProductoDocumentoEntity documento = oProductoDocumentoRepository.findById(documentoId)
+            .orElseThrow(() -> new EntityNotFoundException("Documento no encontrado"));
+
+    // Eliminar el archivo físico
+    String filePath = "src/main/resources/static" + documento.getDocumentoUrl();
+    Files.deleteIfExists(Paths.get(filePath));
+
+    // Eliminar la referencia de la base de datos
+    oProductoDocumentoRepository.delete(documento);
+}
+
 
 }
