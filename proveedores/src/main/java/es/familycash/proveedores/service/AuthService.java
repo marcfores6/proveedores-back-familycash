@@ -35,6 +35,7 @@ public class AuthService {
         Map<String, String> claims = new HashMap<>();
         claims.put("nif", proveedor.getNif());
         claims.put("proveedorId", proveedor.getId().toString());
+        claims.put("rol", proveedor.getRol());
         return claims;
     }
 

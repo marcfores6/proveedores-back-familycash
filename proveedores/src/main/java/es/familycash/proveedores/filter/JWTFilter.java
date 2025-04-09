@@ -60,6 +60,9 @@ public class JWTFilter implements Filter {
             Claims claims = JWTHelper.getAllClaimsFromToken(token);
             httpRequest.setAttribute("nif", claims.get("nif", String.class));
             httpRequest.setAttribute("proveedorId", claims.get("proveedorId", String.class));
+
+            String rol = claims.get("rol", String.class);
+            httpRequest.setAttribute("rol", rol);
         
         } catch (Exception e) {
             e.printStackTrace(); // 🔍 Importante para que veas el error exacto en consola

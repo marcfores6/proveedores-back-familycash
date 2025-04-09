@@ -13,5 +13,6 @@ public class LoginDataBean {
     private String nif;
     private String password;
     private Long proveedorId;
+    private String rol; 
 }
 

@@ -31,8 +31,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -304,7 +302,6 @@ public class ProductoController {
         producto.setPvp_mel(pvp_mel);
         producto.setPaisOrigen(paisOrigen);
 
-        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
         if (insertedAtStr != null && !insertedAtStr.isEmpty()) {
             producto.setInsertedAt(Timestamp.from(Instant.parse(insertedAtStr)));
         }

@@ -16,7 +16,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Table(name = "LU_PRO")
 public class ProveedorEntity {
-    
+
     @Id
     @Column(name = "id_pro")
     private Long id;
@@ -35,5 +35,8 @@ public class ProveedorEntity {
 
     @Column(name = "pro_passwd")
     private String password;
+
+    @Column(name = "pro_rol")
+    private String rol; // valores: "ADMIN", "USER",
 
 }
