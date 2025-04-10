@@ -312,7 +312,6 @@ public class ProductoController {
 
         ProductoEntity updated = oProductoService.update(producto, imagenes, imagenUrls);
 
-       
         ProductoEntity productoCompleto = oProductoService.findById(id);
         oProductoService.guardarDocumentosDelProducto(productoCompleto, documentos);
 
@@ -348,6 +347,17 @@ public class ProductoController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al eliminar el archivo físico.");
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}/enviar")
+    public ResponseEntity<String> enviarProducto(@PathVariable Long id) {
+        try {
+            ProductoEntity producto = oProductoService.enviarProducto(id);
+            return ResponseEntity.ok("Producto enviado correctamente"); // Devolver texto plano
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al enviar el producto: " + e.getMessage());
         }
     }
 

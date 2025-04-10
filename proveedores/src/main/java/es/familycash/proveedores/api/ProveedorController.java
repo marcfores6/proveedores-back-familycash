@@ -67,4 +67,12 @@ public class ProveedorController {
         return new ResponseEntity<>(oProveedorService.getProveedorFromToken(), HttpStatus.OK);
     }
 
+    @PutMapping("/update-password")
+    public ResponseEntity<String> updatePassword(@RequestParam String newPassword) {
+        ProveedorEntity proveedor = oProveedorService.getProveedorFromToken();
+        oProveedorService.updatePassword(proveedor.getId(), newPassword);
+        return ResponseEntity.ok("Contraseña actualizada correctamente");
+    }
+    
+
 }

@@ -182,4 +182,7 @@ public class ProductoEntity {
     @JsonManagedReference
     private List<ProductoDocumentoEntity> documentos = new ArrayList<>();
 
+    @Column(name = "estado")
+    private String estado;
+
 }

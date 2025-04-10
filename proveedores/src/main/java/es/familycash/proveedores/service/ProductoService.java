@@ -252,59 +252,67 @@ public class ProductoService {
         return oProductoRepository.findByProveedor(proveedorIdFormatted, pageable);
     }
 
-    public void guardarDocumentosDelProducto(ProductoEntity producto, List<MultipartFile> documentos) throws IOException {
-    if (documentos == null || documentos.isEmpty()) {
-        return;
+    public void guardarDocumentosDelProducto(ProductoEntity producto, List<MultipartFile> documentos)
+            throws IOException {
+        if (documentos == null || documentos.isEmpty()) {
+            return;
+        }
+
+        // 🧩 Ruta base que quieres, respetando tu configuración Spring para los
+        // estáticos
+        String baseFolder = "./proveedores/imagenes-familycash/images/docs/producto/" + producto.getId() + "/";
+
+        // Crear el directorio si no existe
+        Files.createDirectories(Paths.get(baseFolder));
+
+        // Lista de entidades para guardar en lote
+        List<ProductoDocumentoEntity> documentosParaGuardar = new ArrayList<>();
+
+        for (MultipartFile documento : documentos) {
+            String originalFilename = documento.getOriginalFilename();
+            String filePath = baseFolder + originalFilename;
+
+            // Guardar el archivo en el sistema de archivos
+            Path path = Paths.get(filePath);
+            Files.write(path, documento.getBytes());
+
+            // Crear entidad y añadir a la lista para guardar en la base de datos
+            ProductoDocumentoEntity documentoEntity = new ProductoDocumentoEntity();
+            documentoEntity.setProducto(producto);
+            documentoEntity.setDocumentoUrl("/docs/producto/" + producto.getId() + "/" + originalFilename); // Relativa
+                                                                                                            // para el
+                                                                                                            // frontend
+            documentoEntity.setNombreOriginal(originalFilename);
+
+            documentosParaGuardar.add(documentoEntity);
+        }
+
+        // Guardar todos los documentos de una sola vez en la base de datos
+        oProductoDocumentoRepository.saveAll(documentosParaGuardar);
     }
-
-    // 🧩 Ruta base que quieres, respetando tu configuración Spring para los estáticos
-    String baseFolder = "./proveedores/imagenes-familycash/images/docs/producto/" + producto.getId() + "/";
-
-    // Crear el directorio si no existe
-    Files.createDirectories(Paths.get(baseFolder));
-
-    // Lista de entidades para guardar en lote
-    List<ProductoDocumentoEntity> documentosParaGuardar = new ArrayList<>();
-
-    for (MultipartFile documento : documentos) {
-        String originalFilename = documento.getOriginalFilename();
-        String filePath = baseFolder + originalFilename;
-
-        // Guardar el archivo en el sistema de archivos
-        Path path = Paths.get(filePath);
-        Files.write(path, documento.getBytes());
-
-        // Crear entidad y añadir a la lista para guardar en la base de datos
-        ProductoDocumentoEntity documentoEntity = new ProductoDocumentoEntity();
-        documentoEntity.setProducto(producto);
-        documentoEntity.setDocumentoUrl("/docs/producto/" + producto.getId() + "/" + originalFilename); // Relativa para el frontend
-        documentoEntity.setNombreOriginal(originalFilename);
-
-        documentosParaGuardar.add(documentoEntity);
-    }
-
-    // Guardar todos los documentos de una sola vez en la base de datos
-    oProductoDocumentoRepository.saveAll(documentosParaGuardar);
-}
-
-    
-    
 
     public List<ProductoDocumentoEntity> obtenerDocumentosDeProducto(Long productoId) {
         return oProductoDocumentoRepository.findByProductoId(productoId);
     }
 
     public void eliminarDocumento(Long documentoId) throws IOException {
-    ProductoDocumentoEntity documento = oProductoDocumentoRepository.findById(documentoId)
-            .orElseThrow(() -> new EntityNotFoundException("Documento no encontrado"));
+        ProductoDocumentoEntity documento = oProductoDocumentoRepository.findById(documentoId)
+                .orElseThrow(() -> new EntityNotFoundException("Documento no encontrado"));
 
-    // Eliminar el archivo físico
-    String filePath = "src/main/resources/static" + documento.getDocumentoUrl();
-    Files.deleteIfExists(Paths.get(filePath));
+        // Eliminar el archivo físico
+        String filePath = "src/main/resources/static" + documento.getDocumentoUrl();
+        Files.deleteIfExists(Paths.get(filePath));
 
-    // Eliminar la referencia de la base de datos
-    oProductoDocumentoRepository.delete(documento);
-}
+        // Eliminar la referencia de la base de datos
+        oProductoDocumentoRepository.delete(documento);
+    }
 
+    public ProductoEntity enviarProducto(Long id) throws Exception {
+        ProductoEntity producto = oProductoRepository.findById(id)
+                .orElseThrow(() -> new Exception("Producto no encontrado"));
+
+        producto.setEstado("ENVIADO");
+        return oProductoRepository.save(producto);
+    }
 
 }

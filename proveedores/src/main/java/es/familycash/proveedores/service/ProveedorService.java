@@ -1,5 +1,8 @@
 package es.familycash.proveedores.service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,5 +75,47 @@ public class ProveedorService {
     public ProveedorEntity getProveedorFromToken() {
         return oAuthService.getProveedorFromToken();
     }
+
+    public void updatePassword(Long id, String newPassword) {
+        if (!isValidPassword(newPassword)) {
+            throw new RuntimeException("La contraseña no cumple con los requisitos de seguridad.");
+        }
+    
+        ProveedorEntity proveedor = oProveedorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Proveedor no encontrado con ID: " + id));
+    
+        proveedor.setPassword(hashPassword(newPassword));
+        oProveedorRepository.save(proveedor);
+    }
+    
+    
+    private boolean isValidPassword(String password) {
+        if (password.length() < 8) return false;
+        if (!password.matches(".*[A-Z].*")) return false;
+        if (!password.matches(".*[a-z].*")) return false;
+        if (!password.matches(".*\\d.*")) return false;
+        if (!password.matches(".*[!@#$%^&*(),.?\":{}|<>].*")) return false;
+        return true;
+    }
+    
+    private String hashPassword(String password) {
+    try {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hash) {
+            String hex = Integer.toHexString(0xff & b);
+            if (hex.length() == 1) hexString.append('0');
+            hexString.append(hex);
+        }
+
+        return hexString.toString();
+
+    } catch (NoSuchAlgorithmException e) {
+        throw new RuntimeException("Error al hashear la contraseña", e);
+    }
+}
+    
 
 }
