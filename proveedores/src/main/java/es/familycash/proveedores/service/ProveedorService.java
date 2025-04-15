@@ -84,7 +84,7 @@ public class ProveedorService {
         ProveedorEntity proveedor = oProveedorRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Proveedor no encontrado con ID: " + id));
     
-        proveedor.setPassword(hashPassword(newPassword));
+        proveedor.setPassword(newPassword);
         oProveedorRepository.save(proveedor);
     }
     
