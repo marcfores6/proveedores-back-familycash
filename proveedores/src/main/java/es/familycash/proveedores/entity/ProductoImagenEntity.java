@@ -29,9 +29,6 @@ public class ProductoImagenEntity {
     @Column(name = "imagenUrl")
     private String imagenUrl; // Si se usa URL para las imágenes
 
-    @Lob
-    private byte[] imagen; // Si decides guardar la imagen como byte array
-
     public Long getId() {
         return id;
     }
@@ -56,13 +53,6 @@ public class ProductoImagenEntity {
         this.imagenUrl = imagenUrl;
     }
 
-    public byte[] getImagen() {
-        return imagen;
-    }
-
-    public void setImagen(byte[] imagen) {
-        this.imagen = imagen;
-    }
 
     // Getters and setters
 
