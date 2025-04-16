@@ -26,10 +26,12 @@ public class AuthService {
 
     public boolean checkLogin(LoginDataBean loginData) {
         return oProveedorRepository.findById(loginData.getProveedorId())
-        .filter(p -> p.getNif().equals(loginData.getNif()))
-        .filter(p -> p.getPassword().equals(loginData.getPassword()))
-        .isPresent();
+            .filter(p -> p.getNif().trim().equalsIgnoreCase(loginData.getNif().trim()))
+            .filter(p -> p.getPassword().equals(loginData.getPassword()))
+            .isPresent();
     }
+    
+    
 
     private Map<String, String> getClaims(ProveedorEntity proveedor) {
         Map<String, String> claims = new HashMap<>();
@@ -41,10 +43,12 @@ public class AuthService {
 
     public String getToken(String nif, Long proveedorId) {
         ProveedorEntity proveedor = oProveedorRepository.findById(proveedorId)
-            .filter(p -> p.getNif().equals(nif))
-            .orElseThrow();
+            .filter(p -> p.getNif().trim().equalsIgnoreCase(nif.trim()))
+            .orElseThrow(() -> new RuntimeException("Proveedor no encontrado con ese NIF"));
+    
         return JWTHelper.generateToken(getClaims(proveedor));
     }
+    
 
     public ProveedorEntity getProveedorFromToken() {
         Object proveedorIdAttr = oHttpServletRequest.getAttribute("proveedorId");

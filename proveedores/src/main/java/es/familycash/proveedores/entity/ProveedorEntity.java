@@ -1,10 +1,13 @@
 package es.familycash.proveedores.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -27,6 +30,9 @@ public class ProveedorEntity {
     @Column(name = "ql_pro_nif")
     private String nif;
 
+    @Column(name = "email")
+    private String email;
+
     @Column(name = "id_pro_com")
     private Integer id_comprador;
 
@@ -38,5 +44,11 @@ public class ProveedorEntity {
 
     @Column(name = "pro_rol")
     private String rol; // valores: "ADMIN", "USER",
+
+    @Column(name = "token_recuperacion")
+    private String tokenRecuperacion;
+
+    @Column(name = "token_expiracion")
+    private LocalDateTime tokenExpiracion;
 
 }
