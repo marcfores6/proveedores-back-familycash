@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import es.familycash.proveedores.bean.RecuperarPasswordRequest;
-import es.familycash.proveedores.bean.ResetPasswordRequest;
 import es.familycash.proveedores.entity.ProveedorEntity;
 import es.familycash.proveedores.repository.ProveedorRepository;
 import es.familycash.proveedores.service.EmailService;
@@ -98,67 +96,76 @@ public class ProveedorController {
     }
 
     @PostMapping("/recuperar-password")
-    public ResponseEntity<?> recuperarPassword(@RequestBody RecuperarPasswordRequest data) {
-        Optional<ProveedorEntity> optionalProveedor = oProveedorRepository.findById(data.getProveedorId());
+public ResponseEntity<?> recuperarPassword(@RequestBody RecuperarPasswordRequest data) {
+    Optional<ProveedorEntity> optionalProveedor = oProveedorRepository.findById(data.getProveedorId());
 
-        if (optionalProveedor.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Proveedor no encontrado");
-        }
-
-        ProveedorEntity proveedor = optionalProveedor.get();
-
-        if (!proveedor.getNif().trim().equalsIgnoreCase(data.getNif().trim())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("El NIF no coincide con el proveedor");
-        }
-
-        if (proveedor.getEmail() == null || proveedor.getEmail().trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Este proveedor no tiene email registrado");
-        }
-
-        // Generar token
-        String token = UUID.randomUUID().toString();
-        LocalDateTime expiracion = LocalDateTime.now().plusMinutes(30);
-
-        // 🔥 FORZAR GUARDADO
-        int filasActualizadas = oProveedorRepository.actualizarTokenRecuperacion(
-                token,
-                expiracion,
-                proveedor.getId());
-        System.out.println("TOKEN ACTUALIZADO: " + token + " - Filas afectadas: " + filasActualizadas);
-
-        try {
-            // Enviar correo
-            oEmailService.sendRecuperacionEmail(proveedor.getEmail(), token);
-        } catch (Exception e) {
-            e.printStackTrace(); // 👈 Imprime el error en consola
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error enviando el correo: " + e.getMessage());
-        }
-
-        return ResponseEntity
-                .ok(Map.of("mensaje", "Se ha enviado un correo de recuperación a " + proveedor.getEmail()));
+    if (optionalProveedor.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Proveedor no encontrado");
     }
+
+    ProveedorEntity proveedor = optionalProveedor.get();
+
+    if (!proveedor.getNif().trim().equalsIgnoreCase(data.getNif().trim())) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("El NIF no coincide con el proveedor");
+    }
+
+    if (proveedor.getEmail() == null || proveedor.getEmail().trim().isEmpty()) {
+        // Enviar respuesta para que el cliente pueda añadir el email
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Este proveedor no tiene email registrado. Por favor, proporcione uno.");
+    }
+
+    // Generar token
+    String token = UUID.randomUUID().toString();
+    LocalDateTime expiracion = LocalDateTime.now().plusMinutes(30);
+
+    // 🔥 FORZAR GUARDADO
+    int filasActualizadas = oProveedorRepository.actualizarTokenRecuperacion(
+            token,
+            expiracion,
+            proveedor.getId());
+    System.out.println("TOKEN ACTUALIZADO: " + token + " - Filas afectadas: " + filasActualizadas);
+
+    try {
+        // Enviar correo
+        oEmailService.sendRecuperacionEmail(proveedor.getEmail(), token);
+    } catch (Exception e) {
+        e.printStackTrace(); // 👈 Imprime el error en consola
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error enviando el correo: " + e.getMessage());
+    }
+
+    return ResponseEntity.ok(Map.of("mensaje", "Se ha enviado un correo de recuperación a " + proveedor.getEmail()));
+}
+
 
     @PostMapping("/restablecer-password")
-    public ResponseEntity<?> restablecerPassword(@RequestBody ResetPasswordRequest request) {
-        Optional<ProveedorEntity> optionalProveedor = oProveedorRepository.findByTokenRecuperacion(request.getToken());
+public ResponseEntity<?> restablecerPassword(@RequestParam String token, @RequestParam String newPassword, @RequestParam(required = false) String email) {
+    Optional<ProveedorEntity> optionalProveedor = oProveedorRepository.findByTokenRecuperacion(token);
 
-        if (optionalProveedor.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Token no válido");
-        }
-
-        ProveedorEntity proveedor = optionalProveedor.get();
-
-        if (proveedor.getTokenExpiracion() == null || proveedor.getTokenExpiracion().isBefore(LocalDateTime.now())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El token ha expirado");
-        }
-
-        proveedor.setPassword(request.getNewPassword());
-        proveedor.setTokenRecuperacion(null);
-        proveedor.setTokenExpiracion(null);
-        oProveedorRepository.save(proveedor);
-
-        return ResponseEntity.ok("Contraseña actualizada correctamente");
+    if (optionalProveedor.isEmpty()) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Token no válido");
     }
+
+    ProveedorEntity proveedor = optionalProveedor.get();
+
+    if (proveedor.getTokenExpiracion() == null || proveedor.getTokenExpiracion().isBefore(LocalDateTime.now())) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El token ha expirado");
+    }
+
+    proveedor.setPassword(newPassword);
+
+    // Si el proveedor no tiene email, lo actualizamos
+    if (email != null && !email.isEmpty()) {
+        proveedor.setEmail(email);
+    }
+
+    proveedor.setTokenRecuperacion(null); // invalidar token
+    proveedor.setTokenExpiracion(null);
+    oProveedorRepository.save(proveedor);
+
+    return ResponseEntity.ok("Contraseña actualizada correctamente");
+}
+
+
 
 }
