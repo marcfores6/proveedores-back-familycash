@@ -163,7 +163,7 @@ public ResponseEntity<?> restablecerPassword(@RequestParam String token, @Reques
     proveedor.setTokenExpiracion(null);
     oProveedorRepository.save(proveedor);
 
-    return ResponseEntity.ok("Contraseña actualizada correctamente");
+    return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada correctamente"));
 }
 
 
