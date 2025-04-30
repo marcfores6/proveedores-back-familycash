@@ -96,76 +96,76 @@ public class ProveedorController {
     }
 
     @PostMapping("/recuperar-password")
-public ResponseEntity<?> recuperarPassword(@RequestBody RecuperarPasswordRequest data) {
-    Optional<ProveedorEntity> optionalProveedor = oProveedorRepository.findById(data.getProveedorId());
+    public ResponseEntity<?> recuperarPassword(@RequestBody RecuperarPasswordRequest data) {
+        Optional<ProveedorEntity> optionalProveedor = oProveedorRepository.findById(data.getProveedorId());
 
-    if (optionalProveedor.isEmpty()) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Proveedor no encontrado");
+        if (optionalProveedor.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Proveedor no encontrado");
+        }
+
+        ProveedorEntity proveedor = optionalProveedor.get();
+
+        if (!proveedor.getNif().trim().equalsIgnoreCase(data.getNif().trim())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("El NIF no coincide con el proveedor");
+        }
+
+        if (proveedor.getEmail() == null || proveedor.getEmail().trim().isEmpty()) {
+            // Enviar respuesta para que el cliente pueda añadir el email
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Este proveedor no tiene email registrado. Por favor, proporcione uno.");
+        }
+
+        // Generar token
+        String token = UUID.randomUUID().toString();
+        LocalDateTime expiracion = LocalDateTime.now().plusMinutes(30);
+
+        // 🔥 FORZAR GUARDADO
+        int filasActualizadas = oProveedorRepository.actualizarTokenRecuperacion(
+                token,
+                expiracion,
+                proveedor.getId());
+        System.out.println("TOKEN ACTUALIZADO: " + token + " - Filas afectadas: " + filasActualizadas);
+
+        try {
+            // Enviar correo
+            oEmailService.sendRecuperacionEmail(proveedor.getEmail(), token);
+        } catch (Exception e) {
+            e.printStackTrace(); // 👈 Imprime el error en consola
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error enviando el correo: " + e.getMessage());
+        }
+
+        return ResponseEntity
+                .ok(Map.of("mensaje", "Se ha enviado un correo de recuperación a " + proveedor.getEmail()));
     }
-
-    ProveedorEntity proveedor = optionalProveedor.get();
-
-    if (!proveedor.getNif().trim().equalsIgnoreCase(data.getNif().trim())) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("El NIF no coincide con el proveedor");
-    }
-
-    if (proveedor.getEmail() == null || proveedor.getEmail().trim().isEmpty()) {
-        // Enviar respuesta para que el cliente pueda añadir el email
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Este proveedor no tiene email registrado. Por favor, proporcione uno.");
-    }
-
-    // Generar token
-    String token = UUID.randomUUID().toString();
-    LocalDateTime expiracion = LocalDateTime.now().plusMinutes(30);
-
-    // 🔥 FORZAR GUARDADO
-    int filasActualizadas = oProveedorRepository.actualizarTokenRecuperacion(
-            token,
-            expiracion,
-            proveedor.getId());
-    System.out.println("TOKEN ACTUALIZADO: " + token + " - Filas afectadas: " + filasActualizadas);
-
-    try {
-        // Enviar correo
-        oEmailService.sendRecuperacionEmail(proveedor.getEmail(), token);
-    } catch (Exception e) {
-        e.printStackTrace(); // 👈 Imprime el error en consola
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error enviando el correo: " + e.getMessage());
-    }
-
-    return ResponseEntity.ok(Map.of("mensaje", "Se ha enviado un correo de recuperación a " + proveedor.getEmail()));
-}
-
 
     @PostMapping("/restablecer-password")
-public ResponseEntity<?> restablecerPassword(@RequestParam String token, @RequestParam String newPassword, @RequestParam(required = false) String email) {
-    Optional<ProveedorEntity> optionalProveedor = oProveedorRepository.findByTokenRecuperacion(token);
+    public ResponseEntity<?> restablecerPassword(@RequestParam String token, @RequestParam String newPassword,
+            @RequestParam(required = false) String email) {
+        Optional<ProveedorEntity> optionalProveedor = oProveedorRepository.findByTokenRecuperacion(token);
 
-    if (optionalProveedor.isEmpty()) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Token no válido");
+        if (optionalProveedor.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Token no válido");
+        }
+
+        ProveedorEntity proveedor = optionalProveedor.get();
+
+        if (proveedor.getTokenExpiracion() == null || proveedor.getTokenExpiracion().isBefore(LocalDateTime.now())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El token ha expirado");
+        }
+
+        proveedor.setPassword(newPassword);
+
+        // Si el proveedor no tiene email, lo actualizamos
+        if (email != null && !email.isEmpty()) {
+            proveedor.setEmail(email);
+        }
+
+        proveedor.setTokenRecuperacion(null); // invalidar token
+        proveedor.setTokenExpiracion(null);
+        oProveedorRepository.save(proveedor);
+
+        return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada correctamente"));
     }
-
-    ProveedorEntity proveedor = optionalProveedor.get();
-
-    if (proveedor.getTokenExpiracion() == null || proveedor.getTokenExpiracion().isBefore(LocalDateTime.now())) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El token ha expirado");
-    }
-
-    proveedor.setPassword(newPassword);
-
-    // Si el proveedor no tiene email, lo actualizamos
-    if (email != null && !email.isEmpty()) {
-        proveedor.setEmail(email);
-    }
-
-    proveedor.setTokenRecuperacion(null); // invalidar token
-    proveedor.setTokenExpiracion(null);
-    oProveedorRepository.save(proveedor);
-
-    return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada correctamente"));
-}
-
-
 
 }
