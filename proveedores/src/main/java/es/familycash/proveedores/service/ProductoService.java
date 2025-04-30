@@ -145,6 +145,8 @@ public class ProductoService {
         oProductoEntityFromDatabase.setImagen(producto.getImagen());
         oProductoEntityFromDatabase.setPartidaArancelaria(producto.getPartidaArancelaria());
         oProductoEntityFromDatabase.setPaisOrigen(producto.getPaisOrigen());
+        oProductoEntityFromDatabase.setEstado(producto.getEstado());
+        oProductoEntityFromDatabase.setLeadtime(producto.getLeadtime());
 
         // Procesar imágenes por archivo
         if (imagenes != null) {

@@ -112,4 +112,7 @@ public class ProductoEntity {
     @Column(name = "estado")
     private String estado;
 
+    @Column(name = "leadtime")
+    private Integer leadtime; 
+
 }

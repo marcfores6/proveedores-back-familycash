@@ -179,7 +179,8 @@ public class ProductoController {
             @RequestParam(value = "paisOrigen", required = false) String paisOrigen,
             @RequestParam(value = "imagenUrls", required = false) List<String> imagenUrls,
             @RequestPart(value = "imagenes", required = false) List<MultipartFile> imagenes,
-            @RequestPart(value = "documentos", required = false) List<MultipartFile> documentos) throws IOException {
+            @RequestPart(value = "documentos", required = false) List<MultipartFile> documentos,
+            @RequestParam(value = "leadtime", required = false)Integer leadtime) throws IOException {
 
         ProductoEntity producto = new ProductoEntity();
 
@@ -207,6 +208,7 @@ public class ProductoController {
         producto.setImagen(imagen);
         producto.setPartidaArancelaria(partidaArancelaria);
         producto.setPaisOrigen(paisOrigen);
+        producto.setLeadtime(leadtime);
 
         ProductoEntity updated = oProductoService.update(producto, imagenes, imagenUrls);
 
