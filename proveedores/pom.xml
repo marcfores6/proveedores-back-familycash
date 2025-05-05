@@ -66,6 +66,12 @@
             <artifactId>spring-boot-starter-mail</artifactId>
           </dependency>
           
+          <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+        
 
         <!-- JWT Dependencies (Versión estable y compatible con tu código) -->
         <dependency>

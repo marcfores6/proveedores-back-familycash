@@ -35,4 +35,8 @@ public class ProductoDocumentoEntity {
 
     @Column(name = "nombre_original")
     private String nombreOriginal;
+
+    @Column(length = 1)
+    private String tipo; // T, N o L
+
 }

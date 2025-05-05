@@ -4,9 +4,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import org.apache.commons.io.FilenameUtils;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -229,43 +232,85 @@ public class ProductoService {
         return oProductoRepository.findByProveedor(proveedorIdFormatted, pageable);
     }
 
-    public void guardarDocumentosDelProducto(ProductoEntity producto, List<MultipartFile> documentos)
+    public void guardarDocumentosDelProducto(ProductoEntity producto, List<MultipartFile> documentos,
+            List<String> tiposDocumentos)
             throws IOException {
         if (documentos == null || documentos.isEmpty()) {
             return;
         }
 
-        // 🧩 Ruta base que quieres, respetando tu configuración Spring para los
-        // estáticos
+        // Ruta base donde se guardan los documentos
         String baseFolder = "./proveedores/imagenes-familycash/images/docs/producto/" + producto.getId() + "/";
-
-        // Crear el directorio si no existe
         Files.createDirectories(Paths.get(baseFolder));
 
-        // Lista de entidades para guardar en lote
         List<ProductoDocumentoEntity> documentosParaGuardar = new ArrayList<>();
 
-        for (MultipartFile documento : documentos) {
-            String originalFilename = documento.getOriginalFilename();
-            String filePath = baseFolder + originalFilename;
+        for (int i = 0; i < documentos.size(); i++) {
+            MultipartFile documento = documentos.get(i);
+            String tipo;
+            if (tiposDocumentos != null && tiposDocumentos.size() > i && tiposDocumentos.get(i) != null && !tiposDocumentos.get(i).trim().isEmpty()) {
+                tipo = tiposDocumentos.get(i).trim();
+            } else {
+                throw new IllegalArgumentException("Falta el tipo para el documento " + (i + 1));
+            }
+            
 
-            // Guardar el archivo en el sistema de archivos
+            // Generar nombre del archivo con el formato CODPROVEEDOR_EAN_T.pdf
+            String codProveedor = producto.getProveedor() != null ? producto.getProveedor()
+                    : "SINPROV";
+            String ean = producto.getEan() != null ? producto.getEan() : "SINEAN";
+            String extension = FilenameUtils.getExtension(documento.getOriginalFilename());
+            String nuevoNombre = codProveedor + "_" + ean + "_" + tipo + "." + extension;
+
+            String filePath = baseFolder + nuevoNombre;
             Path path = Paths.get(filePath);
             Files.write(path, documento.getBytes());
 
-            // Crear entidad y añadir a la lista para guardar en la base de datos
+            // Crear la entidad y asignar sus campos
             ProductoDocumentoEntity documentoEntity = new ProductoDocumentoEntity();
             documentoEntity.setProducto(producto);
-            documentoEntity.setDocumentoUrl("/docs/producto/" + producto.getId() + "/" + originalFilename); // Relativa
-                                                                                                            // para el
-                                                                                                            // frontend
-            documentoEntity.setNombreOriginal(originalFilename);
+            documentoEntity.setDocumentoUrl("/docs/producto/" + producto.getId() + "/" + nuevoNombre);
+            documentoEntity.setNombreOriginal(documento.getOriginalFilename());
+            documentoEntity.setTipo(tipo);
 
             documentosParaGuardar.add(documentoEntity);
         }
 
-        // Guardar todos los documentos de una sola vez en la base de datos
+        // Guardado masivo en base de datos
         oProductoDocumentoRepository.saveAll(documentosParaGuardar);
+    }
+
+    public void guardarDocumentoExistente(Long idDocumento, String nuevoTipo) throws IOException {
+        ProductoDocumentoEntity doc = oProductoDocumentoRepository.findById(idDocumento)
+                .orElseThrow(() -> new RuntimeException("Documento no encontrado"));
+
+        ProductoEntity producto = doc.getProducto();
+        if (producto == null) {
+            throw new RuntimeException("Producto asociado no encontrado");
+        }
+
+        String codProveedor = producto.getProveedor() != null ? producto.getProveedor() : "UNKNOWN";
+        String ean = producto.getEan() != null ? producto.getEan() : "0000000000000";
+        String nuevoNombre = codProveedor + "_" + ean + "_" + nuevoTipo + ".pdf";
+
+        // Ruta física actual del archivo
+        String baseDir = "./proveedores/imagenes-familycash/images";
+        Path rutaActual = Paths.get(baseDir + doc.getDocumentoUrl());
+
+        // Nueva ruta
+        Path nuevaRuta = rutaActual.resolveSibling(nuevoNombre);
+
+        // Renombrar físicamente el archivo si existe
+        if (Files.exists(rutaActual)) {
+            Files.move(rutaActual, nuevaRuta, StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        // Actualizar campos en la entidad
+        doc.setTipo(nuevoTipo);
+        doc.setDocumentoUrl("/docs/producto/" + producto.getId() + "/" + nuevoNombre);
+        doc.setNombreOriginal(nuevoNombre);
+
+        oProductoDocumentoRepository.save(doc);
     }
 
     public List<ProductoDocumentoEntity> obtenerDocumentosDeProducto(Long productoId) {

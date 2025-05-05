@@ -180,10 +180,12 @@ public class ProductoController {
             @RequestParam(value = "imagenUrls", required = false) List<String> imagenUrls,
             @RequestPart(value = "imagenes", required = false) List<MultipartFile> imagenes,
             @RequestPart(value = "documentos", required = false) List<MultipartFile> documentos,
-            @RequestParam(value = "leadtime", required = false)Integer leadtime) throws IOException {
-
+            @RequestParam(value = "leadtime", required = false) Integer leadtime,
+            @RequestParam(name = "tiposDocumentos", required = false) List<String> tiposDocumentos,
+            @RequestParam(name = "documentosExistentesTipos", required = false) String documentosExistentesTipos)
+            throws IOException {
+    
         ProductoEntity producto = new ProductoEntity();
-
         producto.setId(id);
         producto.setDescripcion(descripcion);
         producto.setMarca(marca);
@@ -209,28 +211,63 @@ public class ProductoController {
         producto.setPartidaArancelaria(partidaArancelaria);
         producto.setPaisOrigen(paisOrigen);
         producto.setLeadtime(leadtime);
-
+    
+        // Actualiza campos básicos e imágenes
         ProductoEntity updated = oProductoService.update(producto, imagenes, imagenUrls);
-
+    
+        // Carga el producto actualizado con relaciones
         ProductoEntity productoCompleto = oProductoService.findById(id);
-        oProductoService.guardarDocumentosDelProducto(productoCompleto, documentos);
-
+    
+        // Guarda documentos nuevos con tipo
+        oProductoService.guardarDocumentosDelProducto(productoCompleto, documentos, tiposDocumentos);
+    
+        // Actualiza tipo de documentos existentes
+        if (documentosExistentesTipos != null && productoCompleto.getDocumentos() != null) {
+            String[] pares = documentosExistentesTipos.split(",");
+            for (String tipoYId : pares) {
+                String[] partes = tipoYId.split("=");
+                if (partes.length == 2) {
+                    try {
+                        Long docId = Long.parseLong(partes[0]);
+                        String nuevoTipo = partes[1];
+                        productoCompleto.getDocumentos().stream()
+                                .filter(doc -> doc.getId().equals(docId))
+                                .findFirst()
+                                .ifPresent(doc -> {
+                                    doc.setTipo(nuevoTipo);
+                                    try {
+                                        oProductoService.guardarDocumentoExistente(doc.getId(), nuevoTipo);
+                                    } catch (IOException e) {
+                                        System.err.println("Error al guardar documento existente con ID: " + doc.getId());
+                                        e.printStackTrace();
+                                    }
+                                });
+                    } catch (NumberFormatException e) {
+                        System.err.println("Formato incorrecto en documentosExistentesTipos: " + tipoYId);
+                    }
+                }
+            }
+        }
+    
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
+    
 
-    @PutMapping(value = "/{id}/documentos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> uploadDocumentos(
-            @PathVariable Long id,
-            @RequestPart("documentos") List<MultipartFile> documentos) {
-        try {
-            ProductoEntity producto = oProductoService.findById(id);
-            oProductoService.guardarDocumentosDelProducto(producto, documentos);
-            return ResponseEntity.ok("Documentos subidos correctamente");
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error al subir los documentos: " + e.getMessage());
-        }
+    @PostMapping(value = "/{id}/documentos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+public ResponseEntity<String> uploadDocumentos(
+        @PathVariable Long id,
+        @RequestPart("documentos") List<MultipartFile> documentos,
+        @RequestPart("tiposDocumentos") List<String> tiposDocumentos) {
+    try {
+        ProductoEntity producto = oProductoService.findById(id);
+        oProductoService.guardarDocumentosDelProducto(producto, documentos, tiposDocumentos);
+        return ResponseEntity.ok("Documentos subidos correctamente");
+    } catch (IOException e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error al subir los documentos: " + e.getMessage());
     }
+}
+
 
     @GetMapping("/{id}/documentos")
     public ResponseEntity<List<ProductoDocumentoEntity>> getDocumentosByProducto(@PathVariable Long id) {
