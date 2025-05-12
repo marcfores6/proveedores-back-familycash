@@ -20,19 +20,19 @@ public class ImagePathResolver {
     }
 
     public static ImagePath generate(String entityType, Long entityId, String originalFilename) {
-        String cleanFileName = originalFilename.replaceAll("\\s+", "_");
-        String relativeUrl = "/images/" + entityType + "/" + entityId + "/" + cleanFileName;
-        Path absolutePath = Paths.get(BASE_FOLDER, entityType, String.valueOf(entityId), cleanFileName);
-
+        String relativeUrl = "/images/" + entityType + "/" + entityId + "/" + originalFilename;
+        Path absolutePath = Paths.get(BASE_FOLDER, entityType, String.valueOf(entityId), originalFilename);
+    
         try {
             Files.createDirectories(absolutePath.getParent());
             System.out.println("📁 Carpeta creada: " + absolutePath.getParent());
         } catch (IOException e) {
             System.err.println("❌ Error creando carpeta: " + e.getMessage());
         }
-
+    
         return new ImagePath(absolutePath, relativeUrl);
     }
+    
 
     public static Path getFolderPath(String entityType, Long entityId) {
         return Paths.get(BASE_FOLDER, entityType, String.valueOf(entityId));
