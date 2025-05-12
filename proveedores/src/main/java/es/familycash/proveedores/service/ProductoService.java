@@ -142,6 +142,11 @@ public class ProductoService {
         oProductoEntityFromDatabase.setAncho_caja(producto.getAncho_caja());
         oProductoEntityFromDatabase.setAlto_caja(producto.getAlto_caja());
         oProductoEntityFromDatabase.setPeso_caja(producto.getPeso_caja());
+        oProductoEntityFromDatabase.setLargo_unidad(producto.getLargo_unidad());
+        oProductoEntityFromDatabase.setAncho_unidad(producto.getAncho_unidad());
+        oProductoEntityFromDatabase.setAlto_unidad(producto.getAlto_unidad());
+        oProductoEntityFromDatabase.setPeso_neto_unidad(producto.getPeso_neto_unidad());
+        oProductoEntityFromDatabase.setPeso_escurrido_unidad(producto.getPeso_escurrido_unidad());
         oProductoEntityFromDatabase.setDiasCaducidad(producto.getDiasCaducidad());
         oProductoEntityFromDatabase.setIva(producto.getIva());
         oProductoEntityFromDatabase.setObservaciones(producto.getObservaciones());

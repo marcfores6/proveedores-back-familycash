@@ -167,10 +167,15 @@ public class ProductoController {
             @RequestParam(value = "ean", required = false) String ean,
             @RequestParam(value = "ean_caja", required = false) String ean_caja,
             @RequestParam(value = "ean_pack", required = false) String ean_pack,
-            @RequestParam(value = "largo_caja", required = false) Integer largo,
-            @RequestParam(value = "ancho_caja", required = false) Integer ancho,
-            @RequestParam(value = "alto_caja", required = false) Integer alto,
-            @RequestParam(value = "peso_caja", required = false) BigDecimal peso,
+            @RequestParam(value = "largo_caja", required = false) Integer largo_caja,
+            @RequestParam(value = "ancho_caja", required = false) Integer ancho_caja,
+            @RequestParam(value = "alto_caja", required = false) Integer alto_caja,
+            @RequestParam(value = "peso_caja", required = false) BigDecimal peso_caja,
+            @RequestParam(value = "largo_unidad", required = false) Integer largo_unidad,
+            @RequestParam(value = "ancho_unidad", required = false) Integer ancho_unidad,
+            @RequestParam(value = "alto_unidad", required = false) Integer alto_unidad,
+            @RequestParam(value = "peso_neto_unidad", required = false) BigDecimal peso_neto_unidad,
+            @RequestParam(value = "peso_escurrido_unidad", required = false) BigDecimal peso_escurrido_unidad,
             @RequestParam(value = "diasCaducidad", required = false) Integer diasCaducidad,
             @RequestParam(value = "iva", required = false) String iva,
             @RequestParam(value = "observaciones", required = false) String observaciones,
@@ -200,10 +205,15 @@ public class ProductoController {
         producto.setEan(ean);
         producto.setEan_caja(ean_caja);
         producto.setEan_pack(ean_pack);
-        producto.setLargo_caja(largo);
-        producto.setAncho_caja(ancho);
-        producto.setAlto_caja(alto);
-        producto.setPeso_caja(peso);
+        producto.setLargo_caja(largo_caja);
+        producto.setAncho_caja(ancho_caja);
+        producto.setAlto_caja(alto_caja);
+        producto.setPeso_caja(peso_caja);
+        producto.setLargo_unidad(largo_unidad);
+        producto.setAncho_unidad(ancho_unidad);
+        producto.setAlto_unidad(alto_unidad);
+        producto.setPeso_neto_unidad(peso_neto_unidad);
+        producto.setPeso_escurrido_unidad(peso_escurrido_unidad);
         producto.setDiasCaducidad(diasCaducidad);
         producto.setIva(iva);
         producto.setObservaciones(observaciones);

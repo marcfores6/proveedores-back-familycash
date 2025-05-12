@@ -80,6 +80,21 @@ public class ProductoEntity {
     @Column(name = "ara_peso_c", precision = 7, scale = 3)
     private BigDecimal peso_caja;
 
+    @Column(name = "ara_largo_u")
+    private Integer largo_unidad;
+
+    @Column(name = "ara_ancho_u")
+    private Integer ancho_unidad;
+
+    @Column(name = "ara_alto_u")
+    private Integer alto_unidad;
+
+    @Column(name = "ara_peso_neto_u")
+    private BigDecimal peso_neto_unidad;
+
+    @Column(name = "ara_peso_escurrido_u")
+    private BigDecimal peso_escurrido_unidad;
+
     @Column(name = "ara_dias_cad")
     private Integer diasCaducidad;
 
