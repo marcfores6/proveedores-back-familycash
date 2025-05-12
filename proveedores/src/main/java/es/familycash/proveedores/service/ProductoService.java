@@ -130,7 +130,7 @@ public class ProductoService {
         oProductoEntityFromDatabase.setUnidadDeMedida(producto.getUnidadDeMedida());
         oProductoEntityFromDatabase.setCentralizado(producto.getCentralizado());
         oProductoEntityFromDatabase.setUnidadDeCaja(producto.getUnidadDeCaja());
-        oProductoEntityFromDatabase.setUnidadDeServicio(producto.getUnidadDeServicio());
+        //oProductoEntityFromDatabase.setUnidadDeServicio(producto.getUnidadDeServicio());
         oProductoEntityFromDatabase.setUnidadDePack(producto.getUnidadDePack());
         oProductoEntityFromDatabase.setCajasCapa(producto.getCajasCapa());
         oProductoEntityFromDatabase.setCajasPalet(producto.getCajasPalet());
@@ -155,6 +155,8 @@ public class ProductoService {
         oProductoEntityFromDatabase.setPaisOrigen(producto.getPaisOrigen());
         oProductoEntityFromDatabase.setEstado(producto.getEstado());
         oProductoEntityFromDatabase.setLeadtime(producto.getLeadtime());
+        oProductoEntityFromDatabase.setMoq(producto.getMoq());
+        oProductoEntityFromDatabase.setMultiploDePedido(producto.getMultiploDePedido());
 
         // Procesar imágenes por archivo
         if (imagenes != null) {

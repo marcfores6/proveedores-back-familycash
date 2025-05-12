@@ -99,7 +99,6 @@ public class ProductoController {
             @RequestParam(value = "cantidad", required = false) BigDecimal cantidad,
             @RequestParam(value = "centralizado", required = false) String centralizado,
             @RequestParam(value = "unidadDeCaja", required = false) Integer unidadDeCaja,
-            @RequestParam(value = "unidadDeServicio", required = false) Integer unidadDeServicio,
             @RequestParam(value = "pk", required = false) Integer pk,
             @RequestParam(value = "cajasCapa", required = false) Integer cajasCapa,
             @RequestParam(value = "cajasPalet", required = false) Integer cajasPalet,
@@ -127,7 +126,7 @@ public class ProductoController {
         producto.setUnidadDeMedida(unidadDeMedida);
         producto.setCentralizado(centralizado);
         producto.setUnidadDeCaja(unidadDeCaja);
-        producto.setUnidadDeServicio(unidadDeServicio);
+        //producto.setUnidadDeServicio(unidadDeServicio);
         producto.setUnidadDePack(pk);
         producto.setCajasCapa(cajasCapa);
         producto.setCajasPalet(cajasPalet);
@@ -159,7 +158,6 @@ public class ProductoController {
             @RequestParam(value = "unidadDeMedida", required = false) String unidadDeMedida,
             @RequestParam(value = "centralizado", required = false) String centralizado,
             @RequestParam(value = "unidadDeCaja", required = false) Integer unidadDeCaja,
-            @RequestParam(value = "unidadDeServicio", required = false) Integer unidadDeServicio,
             @RequestParam(value = "unidadDePack", required = false) Integer unidadDePack,
             @RequestParam(value = "cajasCapa", required = false) Integer cajasCapa,
             @RequestParam(value = "cajasPalet", required = false) Integer cajasPalet,
@@ -186,6 +184,8 @@ public class ProductoController {
             @RequestPart(value = "imagenes", required = false) List<MultipartFile> imagenes,
             @RequestPart(value = "documentos", required = false) List<MultipartFile> documentos,
             @RequestParam(value = "leadtime", required = false) Integer leadtime,
+            @RequestParam(value = "moq", required = false) Integer moq,
+            @RequestParam(value = "multiplo_de_pedido", required = false) String multiploDePedido,
             @RequestParam(name = "tiposDocumentos", required = false) List<String> tiposDocumentos,
             @RequestParam(name = "documentosExistentesTipos", required = false) String documentosExistentesTipos)
             throws IOException {
@@ -197,7 +197,7 @@ public class ProductoController {
         producto.setUnidadDeMedida(unidadDeMedida);
         producto.setCentralizado(centralizado);
         producto.setUnidadDeCaja(unidadDeCaja);
-        producto.setUnidadDeServicio(unidadDeServicio);
+        //producto.setUnidadDeServicio(unidadDeServicio);
         producto.setUnidadDePack(unidadDePack);
         producto.setCajasCapa(cajasCapa);
         producto.setCajasPalet(cajasPalet);
@@ -221,6 +221,8 @@ public class ProductoController {
         producto.setPartidaArancelaria(partidaArancelaria);
         producto.setPaisOrigen(paisOrigen);
         producto.setLeadtime(leadtime);
+        producto.setMoq(moq);
+        producto.setMultiploDePedido(multiploDePedido);
     
         // Actualiza campos básicos e imágenes
         ProductoEntity updated = oProductoService.update(producto, imagenes, imagenUrls);

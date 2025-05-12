@@ -44,8 +44,8 @@ public class ProductoEntity {
     @Column(name = "ara_uc")
     private Integer unidadDeCaja;
 
-    @Column(name = "ara_us")
-    private Integer unidadDeServicio;
+    //@Column(name = "ara_us")
+    //private Integer unidadDeServicio;
 
     @Column(name = "ara_pk")
     private Integer unidadDePack;// PREGUNTAR;
@@ -130,4 +130,18 @@ public class ProductoEntity {
     @Column(name = "leadtime")
     private Integer leadtime; 
 
+    @Column(name = "moq")
+    private Integer moq; // Minimum Order Quantity
+
+    @Column(name = "multiplo_de_pedido")
+    private String multiploDePedido; // Multiplo de pedido
+
+
+    public String getMultiploDePedido() {
+        return multiploDePedido;
+    }
+    
+    public void setMultiploDePedido(String multiploDePedido) {
+        this.multiploDePedido = multiploDePedido;
+    }
 }

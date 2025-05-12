@@ -1,5 +1,6 @@
 package es.familycash.proveedores.api;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import es.familycash.proveedores.bean.ErrorBean;
 import es.familycash.proveedores.bean.LoginDataBean;
 import es.familycash.proveedores.entity.ProveedorEntity;
 import es.familycash.proveedores.repository.ProveedorRepository;
@@ -28,15 +30,21 @@ public class AuthController {
     @Autowired
     ProveedorRepository proveedorRepository;
 
-    @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginDataBean oLogindataBean) {
-        if (oAuthService.checkLogin(oLogindataBean)) {
-            return ResponseEntity
-                    .ok("\"" + oAuthService.getToken(oLogindataBean.getNif(), oLogindataBean.getProveedorId()) + "\"");
-        } else {
-            return ResponseEntity.status(401).body("\"Error de autenticación\"");
-        }
+   @PostMapping("/login")
+public ResponseEntity<?> login(@RequestBody LoginDataBean oLogindataBean) {
+    if (oAuthService.checkLogin(oLogindataBean)) {
+        String token = oAuthService.getToken(oLogindataBean.getNif(), oLogindataBean.getProveedorId());
+        return ResponseEntity.ok(token);
+    } else {
+        ErrorBean error = new ErrorBean(
+            401,
+            "NIF, proveedor o contraseña incorrectos",
+            LocalDateTime.now()
+        );
+        return ResponseEntity.status(401).body(error);
     }
+}
+
 
     @GetMapping("/proveedores-por-nif")
     public ResponseEntity<List<ProveedorEntity>> getProveedoresPorNif(@RequestParam String nif) {
