@@ -26,7 +26,9 @@ import es.familycash.proveedores.bean.RecuperarPasswordRequest;
 import es.familycash.proveedores.entity.ProveedorEntity;
 import es.familycash.proveedores.repository.ProveedorRepository;
 import es.familycash.proveedores.service.EmailService;
+import es.familycash.proveedores.service.JWTService;
 import es.familycash.proveedores.service.ProveedorService;
+import jakarta.servlet.http.HttpServletRequest;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*", maxAge = 3600)
 @RestController
@@ -41,6 +43,9 @@ public class ProveedorController {
 
     @Autowired
     EmailService oEmailService;
+
+    @Autowired
+    JWTService jwtService;
 
     @GetMapping("")
     public ResponseEntity<Page<ProveedorEntity>> getPage(Pageable oPageable, @RequestParam Optional<String> filter) {
@@ -166,6 +171,24 @@ public class ProveedorController {
         oProveedorRepository.save(proveedor);
 
         return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada correctamente"));
+    }
+
+    @PutMapping("/update-email")
+    public ResponseEntity<?> updateEmail(@RequestParam String email, HttpServletRequest request) {
+        String nif = jwtService.getNifFromRequest(request);
+
+        if (email == null || email.trim().isEmpty() || !email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Formato de email no válido. Debe ser tipo usuario@dominio.com/.es/...");
+        }
+
+        ProveedorEntity proveedor = oProveedorRepository.findByNif(nif)
+                .orElseThrow(() -> new RuntimeException("Proveedor no encontrado con NIF: " + nif));
+
+        proveedor.setEmail(email);
+        oProveedorRepository.save(proveedor);
+
+        return ResponseEntity.ok("Email actualizado correctamente");
     }
 
 }

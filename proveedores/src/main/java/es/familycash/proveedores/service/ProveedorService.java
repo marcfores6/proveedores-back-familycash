@@ -3,6 +3,7 @@ package es.familycash.proveedores.service;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +11,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import es.familycash.proveedores.config.AppConfig;
 import es.familycash.proveedores.entity.ProveedorEntity;
 import es.familycash.proveedores.repository.ProveedorRepository;
+import jakarta.persistence.EntityManager;
 
 @Service
 public class ProveedorService {
@@ -21,6 +24,12 @@ public class ProveedorService {
 
     @Autowired
     AuthService oAuthService;
+
+    @Autowired
+    AppConfig appConfig;
+
+    @Autowired
+    EntityManager entityManager;
 
     public Page<ProveedorEntity> getPage(Pageable oPageable, Optional<String> filter) {
         if (filter.isPresent()) {
@@ -115,6 +124,12 @@ public class ProveedorService {
     } catch (NoSuchAlgorithmException e) {
         throw new RuntimeException("Error al hashear la contraseña", e);
     }
+}
+
+public List<ProveedorEntity> getTodosProveedores() {
+    String tabla = appConfig.getTablaProveedores();
+    String sql = "SELECT * FROM " + tabla;
+    return entityManager.createNativeQuery(sql, ProveedorEntity.class).getResultList();
 }
     
 

@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import es.familycash.proveedores.entity.ProveedorEntity;
 
@@ -35,5 +36,10 @@ public interface ProveedorRepository extends JpaRepository<ProveedorEntity, Long
             @org.springframework.data.repository.query.Param("token") String token,
             @org.springframework.data.repository.query.Param("expiracion") LocalDateTime expiracion,
             @org.springframework.data.repository.query.Param("id") Long id);
+
+
+    @Query(value = "SELECT * FROM #{#entityName}", nativeQuery = true)
+    List<ProveedorEntity> findAllDynamic(); // Esto no sirve con sufijos diferentes, pero te doy uno dinámico abajo
+
 
 }
