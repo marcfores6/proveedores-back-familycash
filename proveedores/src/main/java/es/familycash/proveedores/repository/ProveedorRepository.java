@@ -42,4 +42,5 @@ public interface ProveedorRepository extends JpaRepository<ProveedorEntity, Long
     List<ProveedorEntity> findAllDynamic(); // Esto no sirve con sufijos diferentes, pero te doy uno dinámico abajo
 
 
+
 }

@@ -48,6 +48,9 @@ public class ProveedorController {
     @Autowired
     private ProveedorServiceRouter proveedorService;
 
+    @Autowired
+    private ProveedorServiceRouter oProveedorServiceRouter;
+
     @GetMapping("")
     public ResponseEntity<Page<?>> getPage(Pageable oPageable, @RequestParam Optional<String> filter) {
         return new ResponseEntity<>(proveedorService.getPage(oPageable, filter), HttpStatus.OK);
@@ -204,17 +207,17 @@ public class ProveedorController {
         return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada correctamente"));
     }
 
-    @PutMapping("/update-email")
-    public ResponseEntity<?> updateEmail(@RequestParam String email, HttpServletRequest request) {
-        String nif = jwtService.getNifFromRequest(request);
-
-        if (email == null || email.trim().isEmpty() || !email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Formato de email no válido. Debe ser tipo usuario@dominio.com/.es/... ");
+    @PutMapping("/{id}/update-email")
+    public ResponseEntity<?> updateEmailById(
+            @PathVariable Long id,
+            @RequestParam String email) {
+        try {
+            oProveedorServiceRouter.updateEmailById(id, email);
+            return ResponseEntity.ok().body("✅ Email actualizado correctamente.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("❌ Error al actualizar el email: " + e.getMessage());
         }
-
-        proveedorService.updateEmail(nif, email);
-        return ResponseEntity.ok("Email actualizado correctamente");
     }
 
 }

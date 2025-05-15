@@ -92,62 +92,81 @@ public class ProductoController {
 
     @PostMapping(value = "/new", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProductoEntity> create(
-            @RequestParam("id") Long id,
-            @RequestParam("descripcion") String descripcion,
+            @RequestParam(value = "descripcion", required = false) String descripcion,
             @RequestParam(value = "marca", required = false) String marca,
             @RequestParam(value = "unidadDeMedida", required = false) String unidadDeMedida,
-            @RequestParam(value = "cantidad", required = false) BigDecimal cantidad,
             @RequestParam(value = "centralizado", required = false) String centralizado,
             @RequestParam(value = "unidadDeCaja", required = false) Integer unidadDeCaja,
-            @RequestParam(value = "pk", required = false) Integer pk,
+            @RequestParam(value = "unidadDePack", required = false) Integer unidadDePack,
             @RequestParam(value = "cajasCapa", required = false) Integer cajasCapa,
             @RequestParam(value = "cajasPalet", required = false) Integer cajasPalet,
             @RequestParam(value = "referenciaProveedor", required = false) String referenciaProveedor,
             @RequestParam(value = "ean", required = false) String ean,
-            @RequestParam(value = "ean_c", required = false) String ean_c,
-            @RequestParam(value = "ean_p", required = false) String ean_p,
-            @RequestParam(value = "largo", required = false) Integer largo,
-            @RequestParam(value = "ancho", required = false) Integer ancho,
-            @RequestParam(value = "alto", required = false) Integer alto,
-            @RequestParam(value = "peso", required = false) BigDecimal peso,
+            @RequestParam(value = "ean_caja", required = false) String ean_caja,
+            @RequestParam(value = "ean_pack", required = false) String ean_pack,
+            @RequestParam(value = "largo_caja", required = false) Integer largo_caja,
+            @RequestParam(value = "ancho_caja", required = false) Integer ancho_caja,
+            @RequestParam(value = "alto_caja", required = false) Integer alto_caja,
+            @RequestParam(value = "peso_caja", required = false) BigDecimal peso_caja,
+            @RequestParam(value = "largo_unidad", required = false) Integer largo_unidad,
+            @RequestParam(value = "ancho_unidad", required = false) Integer ancho_unidad,
+            @RequestParam(value = "alto_unidad", required = false) Integer alto_unidad,
+            @RequestParam(value = "peso_neto_unidad", required = false) BigDecimal peso_neto_unidad,
+            @RequestParam(value = "peso_escurrido_unidad", required = false) BigDecimal peso_escurrido_unidad,
             @RequestParam(value = "diasCaducidad", required = false) Integer diasCaducidad,
             @RequestParam(value = "iva", required = false) String iva,
             @RequestParam(value = "observaciones", required = false) String observaciones,
             @RequestParam(value = "imagen", required = false) String imagen,
             @RequestParam(value = "partidaArancelaria", required = false) String partidaArancelaria,
             @RequestParam(value = "paisOrigen", required = false) String paisOrigen,
-            @RequestParam(value = "imagenUrls", required = false) List<String> imagenUrls,
-            @RequestPart(value = "imagenes", required = false) List<MultipartFile> imagenes) throws IOException {
-        ProductoEntity producto = new ProductoEntity();
+            @RequestParam(name = "imagenUrls", required = false) List<String> imagenUrls,
+            @RequestPart(value = "imagenes", required = false) List<MultipartFile> imagenes,
+            @RequestPart(value = "documentos", required = false) List<MultipartFile> documentos,
+            @RequestParam(value = "leadtime", required = false) Integer leadtime,
+            @RequestParam(value = "moq", required = false) Integer moq,
+            @RequestParam(value = "multiplo_de_pedido", required = false) String multiploDePedido,
+            @RequestParam(name = "tiposDocumentos", required = false) List<String> tiposDocumentos) throws IOException {
 
-        producto.setId(id);
+        ProductoEntity producto = new ProductoEntity();
         producto.setDescripcion(descripcion);
         producto.setMarca(marca);
         producto.setUnidadDeMedida(unidadDeMedida);
         producto.setCentralizado(centralizado);
         producto.setUnidadDeCaja(unidadDeCaja);
-        //producto.setUnidadDeServicio(unidadDeServicio);
-        producto.setUnidadDePack(pk);
+        producto.setUnidadDePack(unidadDePack);
         producto.setCajasCapa(cajasCapa);
         producto.setCajasPalet(cajasPalet);
         producto.setReferenciaProveedor(referenciaProveedor);
         producto.setEan(ean);
-        producto.setEan_caja(ean_c);
-        producto.setEan_pack(ean_p);
-        producto.setLargo_caja(largo);
-        producto.setAncho_caja(ancho);
-        producto.setAlto_caja(alto);
-        producto.setPeso_caja(peso);
+        producto.setEan_caja(ean_caja);
+        producto.setEan_pack(ean_pack);
+        producto.setLargo_caja(largo_caja);
+        producto.setAncho_caja(ancho_caja);
+        producto.setAlto_caja(alto_caja);
+        producto.setPeso_caja(peso_caja);
+        producto.setLargo_unidad(largo_unidad);
+        producto.setAncho_unidad(ancho_unidad);
+        producto.setAlto_unidad(alto_unidad);
+        producto.setPeso_neto_unidad(peso_neto_unidad);
+        producto.setPeso_escurrido_unidad(peso_escurrido_unidad);
         producto.setDiasCaducidad(diasCaducidad);
         producto.setIva(iva);
         producto.setObservaciones(observaciones);
         producto.setImagen(imagen);
         producto.setPartidaArancelaria(partidaArancelaria);
         producto.setPaisOrigen(paisOrigen);
+        producto.setLeadtime(leadtime);
+        producto.setMoq(moq);
+        producto.setMultiploDePedido(multiploDePedido);
+        producto.setEstado("PENDIENTE");
 
-        // Aquí procesas las imágenes y las URLs
-        ProductoEntity saved = oProductoService.create(producto, imagenes, imagenUrls);
-        return new ResponseEntity<>(saved, HttpStatus.CREATED);
+        ProductoEntity creado = oProductoService.create(producto, imagenes, imagenUrls);
+
+        if (documentos != null && !documentos.isEmpty()) {
+            oProductoService.guardarDocumentosDelProducto(creado, documentos, tiposDocumentos);
+        }
+
+        return new ResponseEntity<>(creado, HttpStatus.CREATED);
     }
 
     @PutMapping(value = "/update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -189,7 +208,7 @@ public class ProductoController {
             @RequestParam(name = "tiposDocumentos", required = false) List<String> tiposDocumentos,
             @RequestParam(name = "documentosExistentesTipos", required = false) String documentosExistentesTipos)
             throws IOException {
-    
+
         ProductoEntity producto = new ProductoEntity();
         producto.setId(id);
         producto.setDescripcion(descripcion);
@@ -197,7 +216,7 @@ public class ProductoController {
         producto.setUnidadDeMedida(unidadDeMedida);
         producto.setCentralizado(centralizado);
         producto.setUnidadDeCaja(unidadDeCaja);
-        //producto.setUnidadDeServicio(unidadDeServicio);
+        // producto.setUnidadDeServicio(unidadDeServicio);
         producto.setUnidadDePack(unidadDePack);
         producto.setCajasCapa(cajasCapa);
         producto.setCajasPalet(cajasPalet);
@@ -223,16 +242,16 @@ public class ProductoController {
         producto.setLeadtime(leadtime);
         producto.setMoq(moq);
         producto.setMultiploDePedido(multiploDePedido);
-    
+
         // Actualiza campos básicos e imágenes
         ProductoEntity updated = oProductoService.update(producto, imagenes, imagenUrls);
-    
+
         // Carga el producto actualizado con relaciones
         ProductoEntity productoCompleto = oProductoService.findById(id);
-    
+
         // Guarda documentos nuevos con tipo
         oProductoService.guardarDocumentosDelProducto(productoCompleto, documentos, tiposDocumentos);
-    
+
         // Actualiza tipo de documentos existentes
         if (documentosExistentesTipos != null && productoCompleto.getDocumentos() != null) {
             String[] pares = documentosExistentesTipos.split(",");
@@ -250,7 +269,8 @@ public class ProductoController {
                                     try {
                                         oProductoService.guardarDocumentoExistente(doc.getId(), nuevoTipo);
                                     } catch (IOException e) {
-                                        System.err.println("Error al guardar documento existente con ID: " + doc.getId());
+                                        System.err
+                                                .println("Error al guardar documento existente con ID: " + doc.getId());
                                         e.printStackTrace();
                                     }
                                 });
@@ -260,26 +280,24 @@ public class ProductoController {
                 }
             }
         }
-    
+
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
-    
 
     @PostMapping(value = "/{id}/documentos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-public ResponseEntity<String> uploadDocumentos(
-        @PathVariable Long id,
-        @RequestPart("documentos") List<MultipartFile> documentos,
-        @RequestPart("tiposDocumentos") List<String> tiposDocumentos) {
-    try {
-        ProductoEntity producto = oProductoService.findById(id);
-        oProductoService.guardarDocumentosDelProducto(producto, documentos, tiposDocumentos);
-        return ResponseEntity.ok("Documentos subidos correctamente");
-    } catch (IOException e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error al subir los documentos: " + e.getMessage());
+    public ResponseEntity<String> uploadDocumentos(
+            @PathVariable Long id,
+            @RequestPart("documentos") List<MultipartFile> documentos,
+            @RequestPart("tiposDocumentos") List<String> tiposDocumentos) {
+        try {
+            ProductoEntity producto = oProductoService.findById(id);
+            oProductoService.guardarDocumentosDelProducto(producto, documentos, tiposDocumentos);
+            return ResponseEntity.ok("Documentos subidos correctamente");
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al subir los documentos: " + e.getMessage());
+        }
     }
-}
-
 
     @GetMapping("/{id}/documentos")
     public ResponseEntity<List<ProductoDocumentoEntity>> getDocumentosByProducto(@PathVariable Long id) {

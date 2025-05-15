@@ -133,7 +133,30 @@ public class ProveedorServiceRouter {
     }
 
     public void updateEmail(String nif, String nuevoEmail) {
-        Optional<?> opt = findByNif(nif);
+        List<?> lista = isDev() ? repoDes.findAllByNif(nif) : repoProd.findAllByNif(nif);
+
+        if (lista.isEmpty()) {
+            throw new RuntimeException("❌ No se ha encontrado ningún proveedor con ese NIF.");
+        }
+
+        if (lista.size() > 1) {
+            throw new RuntimeException(
+                    "❌ Se han encontrado múltiples proveedores con el mismo NIF. No se puede actualizar el email de forma segura.");
+        }
+
+        Object proveedor = lista.get(0);
+
+        if (proveedor instanceof ProveedorEntity p) {
+            p.setEmail(nuevoEmail);
+            repoProd.save(p);
+        } else if (proveedor instanceof ProveedorEntityDes pDes) {
+            pDes.setEmail(nuevoEmail);
+            repoDes.save(pDes);
+        }
+    }
+
+    public void updateEmailById(Long id, String nuevoEmail) {
+        Optional<?> opt = findById(id);
         if (opt.isPresent()) {
             Object proveedor = opt.get();
             if (proveedor instanceof ProveedorEntity p) {
@@ -143,6 +166,8 @@ public class ProveedorServiceRouter {
                 pDes.setEmail(nuevoEmail);
                 repoDes.save(pDes);
             }
+        } else {
+            throw new RuntimeException("Proveedor no encontrado con id: " + id);
         }
     }
 
