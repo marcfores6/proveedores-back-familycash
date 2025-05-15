@@ -126,11 +126,5 @@ public class ProveedorService {
     }
 }
 
-public List<ProveedorEntity> getTodosProveedores() {
-    String tabla = appConfig.getTablaProveedores();
-    String sql = "SELECT * FROM " + tabla;
-    return entityManager.createNativeQuery(sql, ProveedorEntity.class).getResultList();
-}
-    
 
 }

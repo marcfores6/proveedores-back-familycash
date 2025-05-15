@@ -24,10 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import es.familycash.proveedores.bean.RecuperarPasswordRequest;
 import es.familycash.proveedores.entity.ProveedorEntity;
-import es.familycash.proveedores.repository.ProveedorRepository;
+import es.familycash.proveedores.entity.ProveedorEntityDes;
 import es.familycash.proveedores.service.EmailService;
 import es.familycash.proveedores.service.JWTService;
 import es.familycash.proveedores.service.ProveedorService;
+import es.familycash.proveedores.service.ProveedorServiceRouter;
 import jakarta.servlet.http.HttpServletRequest;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*", maxAge = 3600)
@@ -39,136 +40,166 @@ public class ProveedorController {
     ProveedorService oProveedorService;
 
     @Autowired
-    ProveedorRepository oProveedorRepository;
-
-    @Autowired
     EmailService oEmailService;
 
     @Autowired
     JWTService jwtService;
 
+    @Autowired
+    private ProveedorServiceRouter proveedorService;
+
     @GetMapping("")
-    public ResponseEntity<Page<ProveedorEntity>> getPage(Pageable oPageable, @RequestParam Optional<String> filter) {
-        return new ResponseEntity<>(oProveedorService.getPage(oPageable, filter), HttpStatus.OK);
+    public ResponseEntity<Page<?>> getPage(Pageable oPageable, @RequestParam Optional<String> filter) {
+        return new ResponseEntity<>(proveedorService.getPage(oPageable, filter), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProveedorEntity> get(@PathVariable Long id) {
-        return new ResponseEntity<>(oProveedorService.get(id), HttpStatus.OK);
+    public ResponseEntity<?> get(@PathVariable Long id) {
+        Optional<?> opt = proveedorService.findById(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Proveedor no encontrado");
+        }
+        return ResponseEntity.ok(opt.get());
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<ProveedorEntity>> getAll() {
-        List<ProveedorEntity> lista = oProveedorRepository.findAll();
+    public ResponseEntity<List<?>> getAll() {
+        List<?> lista = proveedorService.findAll();
         return ResponseEntity.ok(lista);
     }
 
     @GetMapping("/count")
     public ResponseEntity<Long> count() {
-        return new ResponseEntity<>(oProveedorService.count(), HttpStatus.OK);
+        return new ResponseEntity<>(proveedorService.count(), HttpStatus.OK);
     }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Long> delete(@PathVariable Long id) {
-        return new ResponseEntity<>(oProveedorService.delete(id), HttpStatus.OK);
+        return new ResponseEntity<>(proveedorService.delete(id), HttpStatus.OK);
     }
 
     @DeleteMapping("/deleteAll")
     public ResponseEntity<Long> deleteAll() {
-        return new ResponseEntity<>(oProveedorService.deleteAll(), HttpStatus.OK);
+        return new ResponseEntity<>(proveedorService.deleteAll(), HttpStatus.OK);
     }
 
     @PutMapping("/update")
-    public ResponseEntity<ProveedorEntity> update(ProveedorEntity oProveedor) {
-        return new ResponseEntity<>(oProveedorService.update(oProveedor), HttpStatus.OK);
+    public ResponseEntity<?> update(@RequestBody Object proveedor) {
+        proveedorService.save(proveedor);
+        return ResponseEntity.ok(proveedor);
     }
 
     @GetMapping("/bynif/{nif}")
-    public ResponseEntity<ProveedorEntity> getByNif(@PathVariable String nif) {
-        return new ResponseEntity<>(oProveedorService.getByNif(nif), HttpStatus.OK);
+    public ResponseEntity<?> getByNif(@PathVariable String nif) {
+        Optional<?> opt = proveedorService.findByNif(nif);
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Proveedor no encontrado con ese NIF");
+        }
+        return ResponseEntity.ok(opt.get());
     }
 
     @GetMapping("/bytoken")
-    public ResponseEntity<ProveedorEntity> getProveedorFromToken() {
-        return new ResponseEntity<>(oProveedorService.getProveedorFromToken(), HttpStatus.OK);
+    public ResponseEntity<?> getProveedorFromToken(HttpServletRequest request) {
+        String nif = jwtService.getNifFromRequest(request);
+        Optional<?> opt = proveedorService.findByNif(nif);
+        if (opt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Proveedor no encontrado");
+        }
+        return ResponseEntity.ok(opt.get());
+
     }
 
     @PutMapping("/update-password")
-    public ResponseEntity<String> updatePassword(@RequestParam String newPassword) {
-        ProveedorEntity proveedor = oProveedorService.getProveedorFromToken();
-        oProveedorService.updatePassword(proveedor.getId(), newPassword);
+    public ResponseEntity<String> updatePassword(@RequestParam String newPassword, HttpServletRequest request) {
+        String nif = jwtService.getNifFromRequest(request);
+        proveedorService.updatePassword(nif, newPassword);
         return ResponseEntity.ok("Contraseña actualizada correctamente");
     }
 
     @PostMapping("/recuperar-password")
     public ResponseEntity<?> recuperarPassword(@RequestBody RecuperarPasswordRequest data) {
-        Optional<ProveedorEntity> optionalProveedor = oProveedorRepository.findById(data.getProveedorId());
+        Optional<?> optionalProveedor = proveedorService.findById(data.getProveedorId());
 
         if (optionalProveedor.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Proveedor no encontrado");
         }
 
-        ProveedorEntity proveedor = optionalProveedor.get();
+        Object proveedorObj = optionalProveedor.get();
 
-        if (!proveedor.getNif().trim().equalsIgnoreCase(data.getNif().trim())) {
+        String nif = null;
+        String email = null;
+        Long id = null;
+
+        if (proveedorObj instanceof ProveedorEntity proveedor) {
+            nif = proveedor.getNif();
+            email = proveedor.getEmail();
+            id = proveedor.getId();
+        } else if (proveedorObj instanceof ProveedorEntityDes proveedorDes) {
+            nif = proveedorDes.getNif();
+            email = proveedorDes.getEmail();
+            id = proveedorDes.getId();
+        }
+
+        if (!nif.trim().equalsIgnoreCase(data.getNif().trim())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("El NIF no coincide con el proveedor");
         }
 
-        if (proveedor.getEmail() == null || proveedor.getEmail().trim().isEmpty()) {
-            // Enviar respuesta para que el cliente pueda añadir el email
+        if (email == null || email.trim().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Este proveedor no tiene email registrado. Por favor, proporcione uno.");
         }
 
-        // Generar token
         String token = UUID.randomUUID().toString();
         LocalDateTime expiracion = LocalDateTime.now().plusMinutes(30);
 
-        // 🔥 FORZAR GUARDADO
-        int filasActualizadas = oProveedorRepository.actualizarTokenRecuperacion(
-                token,
-                expiracion,
-                proveedor.getId());
+        int filasActualizadas = proveedorService.actualizarTokenRecuperacion(token, expiracion, id);
         System.out.println("TOKEN ACTUALIZADO: " + token + " - Filas afectadas: " + filasActualizadas);
 
         try {
-            // Enviar correo
-            oEmailService.sendRecuperacionEmail(proveedor.getEmail(), token);
+            oEmailService.sendRecuperacionEmail(email, token);
         } catch (Exception e) {
-            e.printStackTrace(); // 👈 Imprime el error en consola
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error enviando el correo: " + e.getMessage());
         }
 
-        return ResponseEntity
-                .ok(Map.of("mensaje", "Se ha enviado un correo de recuperación a " + proveedor.getEmail()));
+        return ResponseEntity.ok(Map.of("mensaje", "Se ha enviado un correo de recuperación a " + email));
     }
 
     @PostMapping("/restablecer-password")
     public ResponseEntity<?> restablecerPassword(@RequestParam String token, @RequestParam String newPassword,
             @RequestParam(required = false) String email) {
-        Optional<ProveedorEntity> optionalProveedor = oProveedorRepository.findByTokenRecuperacion(token);
+        Optional<?> optionalProveedor = proveedorService.findByTokenRecuperacion(token);
 
         if (optionalProveedor.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Token no válido");
         }
 
-        ProveedorEntity proveedor = optionalProveedor.get();
+        Object proveedorObj = optionalProveedor.get();
 
-        if (proveedor.getTokenExpiracion() == null || proveedor.getTokenExpiracion().isBefore(LocalDateTime.now())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El token ha expirado");
+        if (proveedorObj instanceof ProveedorEntity proveedor) {
+            if (proveedor.getTokenExpiracion() == null
+                    || proveedor.getTokenExpiracion().isBefore(LocalDateTime.now())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El token ha expirado");
+            }
+            proveedor.setPassword(newPassword);
+            if (email != null && !email.isEmpty())
+                proveedor.setEmail(email);
+            proveedor.setTokenRecuperacion(null);
+            proveedor.setTokenExpiracion(null);
+            proveedorService.save(proveedor);
+        } else if (proveedorObj instanceof ProveedorEntityDes proveedorDes) {
+            if (proveedorDes.getTokenExpiracion() == null
+                    || proveedorDes.getTokenExpiracion().isBefore(LocalDateTime.now())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El token ha expirado");
+            }
+            proveedorDes.setPassword(newPassword);
+            if (email != null && !email.isEmpty())
+                proveedorDes.setEmail(email);
+            proveedorDes.setTokenRecuperacion(null);
+            proveedorDes.setTokenExpiracion(null);
+            proveedorService.save(proveedorDes);
         }
-
-        proveedor.setPassword(newPassword);
-
-        // Si el proveedor no tiene email, lo actualizamos
-        if (email != null && !email.isEmpty()) {
-            proveedor.setEmail(email);
-        }
-
-        proveedor.setTokenRecuperacion(null); // invalidar token
-        proveedor.setTokenExpiracion(null);
-        oProveedorRepository.save(proveedor);
 
         return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada correctamente"));
     }
@@ -179,15 +210,10 @@ public class ProveedorController {
 
         if (email == null || email.trim().isEmpty() || !email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Formato de email no válido. Debe ser tipo usuario@dominio.com/.es/...");
+                    .body("Formato de email no válido. Debe ser tipo usuario@dominio.com/.es/... ");
         }
 
-        ProveedorEntity proveedor = oProveedorRepository.findByNif(nif)
-                .orElseThrow(() -> new RuntimeException("Proveedor no encontrado con NIF: " + nif));
-
-        proveedor.setEmail(email);
-        oProveedorRepository.save(proveedor);
-
+        proveedorService.updateEmail(nif, email);
         return ResponseEntity.ok("Email actualizado correctamente");
     }
 
