@@ -67,56 +67,41 @@ public class ProductoService {
 
     public ProductoEntity create(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls)
             throws IOException {
+
         ProductoEntity guardado = oProductoRepository.save(producto);
 
         // Procesar imágenes por archivo
         if (imagenes != null) {
-            StringBuilder imagenesGuardadas = new StringBuilder();
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    ImagePathResolver.ImagePath ruta = ImagePathResolver.generate("producto", guardado.getId(),
-                            file.getOriginalFilename());
+                    ImagePathResolver.ImagePath ruta = ImagePathResolver.generate(
+                            "producto", guardado.getId(), file.getOriginalFilename());
+
                     Files.createDirectories(ruta.absolutePath.getParent());
-                    Files.write(ruta.absolutePath, file.getBytes()); // Aquí se puede lanzar IOException
+                    Files.write(ruta.absolutePath, file.getBytes());
 
                     ProductoImagenEntity imagenEntity = new ProductoImagenEntity();
                     imagenEntity.setProducto(guardado);
-                    imagenEntity.setImagenUrl("/" + ruta.relativeUrl.replace("\\", "/"));
+                    imagenEntity
+                            .setImagenUrl("/images/producto/" + guardado.getId() + "/" + file.getOriginalFilename());
                     oProductoImagenRepository.save(imagenEntity);
-
-                    // Concatenar la URL de la imagen al campo ara_image
-                    if (imagenesGuardadas.length() > 0) {
-                        imagenesGuardadas.append(",");
-                    }
-                    imagenesGuardadas.append("/").append(ruta.relativeUrl.replace("\\", "/"));
                 }
             }
-            // Guardar las URLs de las imágenes en ara_image
-            producto.setImagen(imagenesGuardadas.toString());
         }
 
         // Procesar imágenes por URL
         if (imagenUrls != null) {
-            StringBuilder imagenesGuardadas = new StringBuilder();
             for (String url : imagenUrls) {
                 if (url != null && !url.trim().isEmpty()) {
                     ProductoImagenEntity imagenEntity = new ProductoImagenEntity();
                     imagenEntity.setProducto(guardado);
                     imagenEntity.setImagenUrl(url.trim());
                     oProductoImagenRepository.save(imagenEntity);
-
-                    // Concatenar la URL al campo ara_image
-                    if (imagenesGuardadas.length() > 0) {
-                        imagenesGuardadas.append(",");
-                    }
-                    imagenesGuardadas.append(url.trim());
                 }
             }
-            // Guardar las URLs de las imágenes en ara_image
-            producto.setImagen(imagenesGuardadas.toString());
         }
 
-        return oProductoRepository.save(producto);
+        return oProductoRepository.findById(guardado.getId()).orElseThrow();
     }
 
     public ProductoEntity update(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls)
@@ -130,7 +115,7 @@ public class ProductoService {
         oProductoEntityFromDatabase.setUnidadDeMedida(producto.getUnidadDeMedida());
         oProductoEntityFromDatabase.setCentralizado(producto.getCentralizado());
         oProductoEntityFromDatabase.setUnidadDeCaja(producto.getUnidadDeCaja());
-        //oProductoEntityFromDatabase.setUnidadDeServicio(producto.getUnidadDeServicio());
+        // oProductoEntityFromDatabase.setUnidadDeServicio(producto.getUnidadDeServicio());
         oProductoEntityFromDatabase.setUnidadDePack(producto.getUnidadDePack());
         oProductoEntityFromDatabase.setCajasCapa(producto.getCajasCapa());
         oProductoEntityFromDatabase.setCajasPalet(producto.getCajasPalet());
@@ -255,12 +240,12 @@ public class ProductoService {
         for (int i = 0; i < documentos.size(); i++) {
             MultipartFile documento = documentos.get(i);
             String tipo;
-            if (tiposDocumentos != null && tiposDocumentos.size() > i && tiposDocumentos.get(i) != null && !tiposDocumentos.get(i).trim().isEmpty()) {
+            if (tiposDocumentos != null && tiposDocumentos.size() > i && tiposDocumentos.get(i) != null
+                    && !tiposDocumentos.get(i).trim().isEmpty()) {
                 tipo = tiposDocumentos.get(i).trim();
             } else {
                 throw new IllegalArgumentException("Falta el tipo para el documento " + (i + 1));
             }
-            
 
             // Generar nombre del archivo con el formato CODPROVEEDOR_EAN_T.pdf
             String codProveedor = producto.getProveedor() != null ? producto.getProveedor()

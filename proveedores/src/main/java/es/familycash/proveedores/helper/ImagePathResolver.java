@@ -25,9 +25,9 @@ public class ImagePathResolver {
     
         try {
             Files.createDirectories(absolutePath.getParent());
-            System.out.println("📁 Carpeta creada: " + absolutePath.getParent());
+            System.out.println("Carpeta creada: " + absolutePath.getParent());
         } catch (IOException e) {
-            System.err.println("❌ Error creando carpeta: " + e.getMessage());
+            System.err.println("Error creando carpeta: " + e.getMessage());
         }
     
         return new ImagePath(absolutePath, relativeUrl);
