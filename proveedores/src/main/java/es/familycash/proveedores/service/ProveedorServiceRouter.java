@@ -2,6 +2,7 @@ package es.familycash.proveedores.service;
 
 import es.familycash.proveedores.config.AppConfig;
 import es.familycash.proveedores.config.RequestContext;
+import es.familycash.proveedores.entity.ProductoEntity;
 import es.familycash.proveedores.entity.ProveedorEntity;
 import es.familycash.proveedores.entity.ProveedorEntityDes;
 import es.familycash.proveedores.repository.ProveedorRepository;
@@ -76,6 +77,8 @@ public class ProveedorServiceRouter {
             return repoProd.findByNif(nif);
         }
     }
+
+
 
     public Page<? extends Object> getPage(Pageable pageable, Optional<String> filter) {
         if (isDev()) {

@@ -105,7 +105,7 @@ public class ProductoEntity {
     private String iva;
 
     @Column(name = "ARA_PRO")
-    private String proveedor;// PREGUNTAR
+    private String proveedor;// RELACION
 
     @Column(name = "ara_obs")
     private String observaciones;

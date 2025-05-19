@@ -1,7 +1,6 @@
 package es.familycash.proveedores.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,8 +21,9 @@ import es.familycash.proveedores.entity.ProductoEntity;
 import es.familycash.proveedores.repository.ProductoRepository;
 import es.familycash.proveedores.repository.ProveedorRepository;
 import es.familycash.proveedores.service.AuthService;
-import es.familycash.proveedores.service.ProductoService;
+import es.familycash.proveedores.service.ProductoServiceRouter;
 import es.familycash.proveedores.service.ProveedorService;
+import es.familycash.proveedores.service.ProveedorServiceRouter;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @CrossOrigin(origins = "*", allowedHeaders = "*", maxAge = 3600)
 @RestController
@@ -40,10 +41,10 @@ import org.springframework.data.domain.Page;
 public class ProductoController {
 
     @Autowired
-    ProductoService oProductoService;
+    ProductoServiceRouter oProductoService;
 
     @Autowired
-    ProveedorService oProveedorService;
+    ProveedorServiceRouter oProveedorService;
 
     @Autowired
     ProveedorRepository oProveedorRepository;
@@ -125,7 +126,8 @@ public class ProductoController {
             @RequestParam(value = "leadtime", required = false) Integer leadtime,
             @RequestParam(value = "moq", required = false) Integer moq,
             @RequestParam(value = "multiplo_de_pedido", required = false) String multiploDePedido,
-            @RequestParam(name = "tiposDocumentos", required = false) List<String> tiposDocumentos) throws IOException {
+            @RequestParam(name = "tiposDocumentos", required = false) List<String> tiposDocumentos,
+            @RequestParam(value = "proveedor", required = false) String proveedor) throws IOException {
 
         ProductoEntity producto = new ProductoEntity();
         producto.setDescripcion(descripcion);
@@ -158,6 +160,7 @@ public class ProductoController {
         producto.setLeadtime(leadtime);
         producto.setMoq(moq);
         producto.setMultiploDePedido(multiploDePedido);
+        producto.setProveedor(proveedor);
         producto.setEstado("PENDIENTE");
 
         ProductoEntity creado = oProductoService.create(producto, imagenes, imagenUrls);
