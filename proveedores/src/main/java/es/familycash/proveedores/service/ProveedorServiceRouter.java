@@ -1,8 +1,6 @@
 package es.familycash.proveedores.service;
 
-import es.familycash.proveedores.config.AppConfig;
 import es.familycash.proveedores.config.RequestContext;
-import es.familycash.proveedores.entity.ProductoEntity;
 import es.familycash.proveedores.entity.ProveedorEntity;
 import es.familycash.proveedores.entity.ProveedorEntityDes;
 import es.familycash.proveedores.repository.ProveedorRepository;
@@ -16,7 +14,6 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import java.util.Optional;
 
 @Service
 public class ProveedorServiceRouter {

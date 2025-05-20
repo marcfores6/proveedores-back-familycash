@@ -22,7 +22,6 @@ import es.familycash.proveedores.repository.ProductoRepository;
 import es.familycash.proveedores.repository.ProveedorRepository;
 import es.familycash.proveedores.service.AuthService;
 import es.familycash.proveedores.service.ProductoServiceRouter;
-import es.familycash.proveedores.service.ProveedorService;
 import es.familycash.proveedores.service.ProveedorServiceRouter;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -80,9 +79,18 @@ public class ProductoController {
         return new ResponseEntity<>(oProductoService.count(), HttpStatus.OK);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Long> delete(@PathVariable Long id) {
-        return new ResponseEntity<>(oProductoService.delete(id), HttpStatus.OK);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteProducto(@PathVariable Long id) {
+        try {
+            oProductoService.deleteProductoYArchivos(id);
+            return ResponseEntity.ok("Producto eliminado correctamente");
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error eliminando archivos del producto: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Error eliminando producto: " + e.getMessage());
+        }
     }
 
     @DeleteMapping("/imagen/{id}")

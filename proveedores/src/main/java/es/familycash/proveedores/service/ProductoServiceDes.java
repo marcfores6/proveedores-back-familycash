@@ -329,4 +329,24 @@ public class ProductoServiceDes {
         return oProductoRepositoryDes.save(producto);
     }
 
+    public void deleteProductoYArchivos(Long id) throws IOException {
+        ProductoEntityDes producto = oProductoRepositoryDes.findById(id)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+
+        // Eliminar imágenes físicas
+        for (ProductoImagenEntityDes imagen : producto.getImagenes()) {
+            deleteImagen(imagen.getId());
+        }
+
+        // Eliminar documentos físicos
+        for (ProductoDocumentoEntityDes documento : producto.getDocumentos()) {
+            eliminarDocumento(documento.getId());
+        }
+
+        // Eliminar el producto
+        oProductoRepositoryDes.delete(producto);
+
+        System.out.println("Producto eliminado completamente (dev): ID " + id);
+    }
+
 }

@@ -1,6 +1,5 @@
 package es.familycash.proveedores.service;
 
-import es.familycash.proveedores.config.AppConfig;
 import es.familycash.proveedores.config.RequestContext;
 import es.familycash.proveedores.entity.*;
 
@@ -11,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Pageable;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -175,6 +175,31 @@ public class ProductoServiceRouter {
         prod.setMoq(des.getMoq());
         prod.setMultiploDePedido(des.getMultiploDePedido());
         prod.setProveedor(des.getProveedor());
+
+        // 👉 Aquí mapeamos también las imágenes
+        prod.setImagenes(
+                des.getImagenes() != null
+                        ? des.getImagenes().stream().map(img -> {
+                            ProductoImagenEntity imagen = new ProductoImagenEntity();
+                            imagen.setId(img.getId());
+                            imagen.setImagenUrl(img.getImagenUrl());
+                            return imagen;
+                        }).collect(Collectors.toList())
+                        : new ArrayList<>());
+
+        // 👉 Aquí mapeamos también los documentos
+        prod.setDocumentos(
+                des.getDocumentos() != null
+                        ? des.getDocumentos().stream().map(doc -> {
+                            ProductoDocumentoEntity documento = new ProductoDocumentoEntity();
+                            documento.setId(doc.getId());
+                            documento.setDocumentoUrl(doc.getDocumentoUrl());
+                            documento.setNombreOriginal(doc.getNombreOriginal());
+                            documento.setTipo(doc.getTipo());
+                            return documento;
+                        }).collect(Collectors.toList())
+                        : new ArrayList<>());
+
         return prod;
     }
 
@@ -254,6 +279,14 @@ public class ProductoServiceRouter {
             productoServiceDes.eliminarDocumento(id);
         } else {
             productoService.eliminarDocumento(id);
+        }
+    }
+
+    public void deleteProductoYArchivos(Long id) throws IOException {
+        if (isDev()) {
+            productoServiceDes.deleteProductoYArchivos(id);
+        } else {
+            productoService.deleteProductoYArchivos(id);
         }
     }
 

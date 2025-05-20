@@ -10,7 +10,6 @@ import es.familycash.proveedores.bean.LoginDataBean;
 import es.familycash.proveedores.entity.ProveedorEntity;
 import es.familycash.proveedores.entity.ProveedorEntityDes;
 import es.familycash.proveedores.exception.UnauthorizedAccessException;
-import es.familycash.proveedores.repository.ProveedorRepository;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Service
