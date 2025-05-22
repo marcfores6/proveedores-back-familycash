@@ -94,7 +94,7 @@ public class ProductoController {
     }
 
     @DeleteMapping("/imagen/{id}")
-    public ResponseEntity<?> deleteImagen(@PathVariable Long id) {
+    public ResponseEntity<?> deleteImagen(@PathVariable Long id) throws IOException {
         oProductoService.deleteImagen(id);
         return ResponseEntity.ok().build();
     }

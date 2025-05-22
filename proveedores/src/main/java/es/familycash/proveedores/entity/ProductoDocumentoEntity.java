@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "producto_documento")
+@Table(name = "DT_PRO_DOC")
 @Getter
 @Setter
 @NoArgsConstructor

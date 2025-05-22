@@ -37,6 +37,7 @@ public class ProductoServiceRouter {
             ProductoEntityDes creado = productoServiceDes.create(
                     toProductoEntityDes(producto), imagenes, imagenUrls);
             return toProductoEntity(creado);
+            
         } else {
             return productoService.create(producto, imagenes, imagenUrls);
         }
@@ -95,7 +96,7 @@ public class ProductoServiceRouter {
         }
     }
 
-    public void deleteImagen(Long id) {
+    public void deleteImagen(Long id) throws IOException {
         if (isDev()) {
             productoServiceDes.deleteImagen(id);
         } else {

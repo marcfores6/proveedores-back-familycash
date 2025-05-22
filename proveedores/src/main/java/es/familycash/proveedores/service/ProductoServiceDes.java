@@ -18,10 +18,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import es.familycash.proveedores.entity.ProductoDocumentoEntityDes;
+import es.familycash.proveedores.entity.ProductoEntity;
 import es.familycash.proveedores.entity.ProductoEntityDes;
 import es.familycash.proveedores.entity.ProductoImagenEntityDes;
 import es.familycash.proveedores.helper.ImagePathResolver;
 import es.familycash.proveedores.repository.ProductoDocumentoRepositoryDes;
+import es.familycash.proveedores.repository.ProductoImagenRepository;
 import es.familycash.proveedores.repository.ProductoImagenRepositoryDes;
 
 import es.familycash.proveedores.repository.ProductoRepositoryDes;
@@ -84,6 +86,7 @@ public class ProductoServiceDes {
                     imagenEntity.setProducto(guardado);
                     imagenEntity
                             .setImagenUrl("/images/producto/" + guardado.getId() + "/" + file.getOriginalFilename());
+                    System.out.println("📷 Guardando imagen en: " + ruta.absolutePath);
                     oProductoImagenRepositoryDes.save(imagenEntity);
                 }
             }
@@ -187,36 +190,6 @@ public class ProductoServiceDes {
     public ProductoEntityDes findById(Long id) {
         return oProductoRepositoryDes.findById(id)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
-    }
-
-    public void deleteImagen(Long id) {
-        ProductoImagenEntityDes imagen = oProductoImagenRepositoryDes.findById(id)
-                .orElseThrow(() -> new RuntimeException("Imagen no encontrada con id: " + id));
-
-        String imagenUrl = imagen.getImagenUrl();
-
-        // Solo eliminamos el archivo si la imagen está en el sistema de archivos (no es
-        // URL externa)
-        if (imagenUrl != null && imagenUrl.startsWith("/images/")) {
-            String baseFolder = "C:\\imagenes-familycash";
-            Path rutaCompleta = Paths.get(baseFolder, imagenUrl.replaceFirst("/", "").replace("/", "\\"));
-
-            try {
-                boolean deleted = Files.deleteIfExists(rutaCompleta);
-                if (deleted) {
-                    System.out.println("🗑️ Imagen eliminada físicamente: " + rutaCompleta);
-                } else {
-                    System.out.println("⚠️ No se encontró la imagen para eliminar: " + rutaCompleta);
-                }
-            } catch (IOException e) {
-                System.err.println("❌ Error eliminando la imagen del disco: " + e.getMessage());
-            }
-        } else {
-            System.out.println("🌐 Imagen externa no eliminada físicamente: " + imagenUrl);
-        }
-
-        // Finalmente, eliminamos la entrada de la base de datos
-        oProductoImagenRepositoryDes.delete(imagen);
     }
 
     public Page<ProductoEntityDes> getPageByProveedor(Pageable pageable, String proveedorId) {
@@ -348,5 +321,74 @@ public class ProductoServiceDes {
 
         System.out.println("Producto eliminado completamente (dev): ID " + id);
     }
+
+    public void guardarImagenesDelProducto(ProductoEntityDes producto, List<MultipartFile> imagenes) throws IOException {
+    if (imagenes == null || imagenes.isEmpty()) {
+        return;
+    }
+
+    // Ruta base donde se guardan las imágenes
+    String baseFolder = "./proveedores/imagenes-familycash/images/producto/" + producto.getId() + "/";
+    Files.createDirectories(Paths.get(baseFolder));
+
+    List<ProductoImagenEntityDes> imagenesParaGuardar = new ArrayList<>();
+
+    for (MultipartFile imagen : imagenes) {
+        String codProveedor = producto.getProveedor() != null ? producto.getProveedor() : "SINPROV";
+        String ean = producto.getEan() != null ? producto.getEan() : "SINEAN";
+        String extension = FilenameUtils.getExtension(imagen.getOriginalFilename());
+
+        String nuevoNombre = codProveedor + "_" + ean + "_" + System.currentTimeMillis() + "." + extension;
+        String filePath = baseFolder + nuevoNombre;
+        Path path = Paths.get(filePath);
+        Files.write(path, imagen.getBytes());
+
+        ProductoImagenEntityDes imagenEntity = new ProductoImagenEntityDes();
+        imagenEntity.setProducto(producto);
+        imagenEntity.setImagenUrl("/images/producto/" + producto.getId() + "/" + nuevoNombre);
+        imagenesParaGuardar.add(imagenEntity);
+    }
+
+    oProductoImagenRepositoryDes.saveAll(imagenesParaGuardar);
+}
+
+public List<ProductoImagenEntityDes> obtenerImagenesDeProducto(Long productoId) {
+    return oProductoImagenRepositoryDes.findByProductoId(productoId);
+}
+
+public void deleteImagen(Long imagenId) throws IOException {
+    ProductoImagenEntityDes imagen = oProductoImagenRepositoryDes.findById(imagenId)
+            .orElseThrow(() -> new EntityNotFoundException("Imagen no encontrada"));
+
+    String filePath = "./proveedores/imagenes-familycash/images" + imagen.getImagenUrl();
+    Files.deleteIfExists(Paths.get(filePath));
+
+    oProductoImagenRepositoryDes.delete(imagen);
+}
+
+public void actualizarNombreImagenDes(Long idImagen, String nuevoNombreSinExtension) throws IOException {
+    ProductoImagenEntityDes imagen = oProductoImagenRepositoryDes.findById(idImagen)
+            .orElseThrow(() -> new RuntimeException("Imagen no encontrada"));
+
+    ProductoEntityDes producto = imagen.getProducto();
+    if (producto == null) {
+        throw new RuntimeException("Producto asociado no encontrado");
+    }
+
+    String extension = FilenameUtils.getExtension(imagen.getImagenUrl());
+    String nuevoNombre = nuevoNombreSinExtension + "." + extension;
+
+    String baseDir = "./proveedores/imagenes-familycash/images";
+    Path rutaActual = Paths.get(baseDir + imagen.getImagenUrl());
+    Path nuevaRuta = rutaActual.resolveSibling(nuevoNombre);
+
+    if (Files.exists(rutaActual)) {
+        Files.move(rutaActual, nuevaRuta, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    imagen.setImagenUrl("/images/producto/" + producto.getId() + "/" + nuevoNombre);
+    oProductoImagenRepositoryDes.save(imagen);
+}
+
 
 }
