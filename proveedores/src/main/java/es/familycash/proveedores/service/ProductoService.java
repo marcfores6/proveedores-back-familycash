@@ -74,17 +74,18 @@ public class ProductoService {
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    ImagePathResolver.ImagePath ruta = ImagePathResolver.generate(
-                            "producto", guardado.getId(), file.getOriginalFilename());
+                    String baseFolder = "./proveedores/imagenes-familycash/images/producto/" + guardado.getId() + "/";
+                    Files.createDirectories(Paths.get(baseFolder));
 
-                    Files.createDirectories(ruta.absolutePath.getParent());
-                    Files.write(ruta.absolutePath, file.getBytes());
+                    String filename = file.getOriginalFilename();
+                    Path path = Paths.get(baseFolder + filename);
+                    Files.write(path, file.getBytes());
 
                     ProductoImagenEntity imagenEntity = new ProductoImagenEntity();
                     imagenEntity.setProducto(guardado);
-                    imagenEntity
-                            .setImagenUrl("/images/producto/" + guardado.getId() + "/" + file.getOriginalFilename());
+                    imagenEntity.setImagenUrl("/images/producto/" + guardado.getId() + "/" + filename);
                     oProductoImagenRepository.save(imagenEntity);
+
                 }
             }
         }
@@ -147,17 +148,18 @@ public class ProductoService {
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    ImagePathResolver.ImagePath ruta = ImagePathResolver.generate(
-                            "producto", oProductoEntityFromDatabase.getId(), file.getOriginalFilename());
+                    String baseFolder = "./proveedores/imagenes-familycash/images/producto/" + oProductoEntityFromDatabase.getId()  + "/";
+                    Files.createDirectories(Paths.get(baseFolder));
 
-                    Files.createDirectories(ruta.absolutePath.getParent());
-                    Files.write(ruta.absolutePath, file.getBytes());
+                    String filename = file.getOriginalFilename();
+                    Path path = Paths.get(baseFolder + filename);
+                    Files.write(path, file.getBytes());
 
                     ProductoImagenEntity imagenEntity = new ProductoImagenEntity();
                     imagenEntity.setProducto(oProductoEntityFromDatabase);
-                    imagenEntity.setImagenUrl("/images/producto/" + oProductoEntityFromDatabase.getId() + "/"
-                            + file.getOriginalFilename());
+                    imagenEntity.setImagenUrl("/images/producto/" + oProductoEntityFromDatabase.getId() + "/" + filename);
                     oProductoImagenRepository.save(imagenEntity);
+
                 }
             }
         }
