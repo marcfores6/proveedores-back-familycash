@@ -146,8 +146,8 @@ public class ProductoServiceRouter {
         prod.setId(des.getId());
         prod.setDescripcion(des.getDescripcion());
         prod.setMarca(des.getMarca());
-        prod.setUnidadDeMedida(des.getUnidadDeMedida());
-        prod.setCentralizado(des.getCentralizado());
+        //prod.setUnidadDeMedida(des.getUnidadDeMedida());
+        //prod.setCentralizado(des.getCentralizado());
         prod.setUnidadDeCaja(des.getUnidadDeCaja());
         prod.setUnidadDePack(des.getUnidadDePack());
         prod.setCajasCapa(des.getCajasCapa());
@@ -209,8 +209,8 @@ public class ProductoServiceRouter {
         des.setId(prod.getId());
         des.setDescripcion(prod.getDescripcion());
         des.setMarca(prod.getMarca());
-        des.setUnidadDeMedida(prod.getUnidadDeMedida());
-        des.setCentralizado(prod.getCentralizado());
+        //des.setUnidadDeMedida(prod.getUnidadDeMedida());
+        //des.setCentralizado(prod.getCentralizado());
         des.setUnidadDeCaja(prod.getUnidadDeCaja());
         des.setUnidadDePack(prod.getUnidadDePack());
         des.setCajasCapa(prod.getCajasCapa());

@@ -1,8 +1,5 @@
 package es.familycash.proveedores.service;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,6 +103,7 @@ public class ProveedorService {
         return true;
     }
     
+    /* 
     private String hashPassword(String password) {
     try {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -123,7 +121,7 @@ public class ProveedorService {
     } catch (NoSuchAlgorithmException e) {
         throw new RuntimeException("Error al hashear la contraseña", e);
     }
-}
+}*/
 
 
 }

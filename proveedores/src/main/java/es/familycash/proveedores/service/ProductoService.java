@@ -20,7 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 import es.familycash.proveedores.entity.ProductoDocumentoEntity;
 import es.familycash.proveedores.entity.ProductoEntity;
 import es.familycash.proveedores.entity.ProductoImagenEntity;
-import es.familycash.proveedores.helper.ImagePathResolver;
 import es.familycash.proveedores.repository.ProductoDocumentoRepository;
 import es.familycash.proveedores.repository.ProductoImagenRepository;
 
@@ -113,8 +112,8 @@ public class ProductoService {
         // Copiar valores del producto
         oProductoEntityFromDatabase.setDescripcion(producto.getDescripcion());
         oProductoEntityFromDatabase.setMarca(producto.getMarca());
-        oProductoEntityFromDatabase.setUnidadDeMedida(producto.getUnidadDeMedida());
-        oProductoEntityFromDatabase.setCentralizado(producto.getCentralizado());
+        //oProductoEntityFromDatabase.setUnidadDeMedida(producto.getUnidadDeMedida());
+        //oProductoEntityFromDatabase.setCentralizado(producto.getCentralizado());
         oProductoEntityFromDatabase.setUnidadDeCaja(producto.getUnidadDeCaja());
         // oProductoEntityFromDatabase.setUnidadDeServicio(producto.getUnidadDeServicio());
         oProductoEntityFromDatabase.setUnidadDePack(producto.getUnidadDePack());

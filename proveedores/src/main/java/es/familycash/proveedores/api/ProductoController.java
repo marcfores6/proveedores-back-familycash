@@ -103,8 +103,6 @@ public class ProductoController {
     public ResponseEntity<ProductoEntity> create(
             @RequestParam(value = "descripcion", required = false) String descripcion,
             @RequestParam(value = "marca", required = false) String marca,
-            @RequestParam(value = "unidadDeMedida", required = false) String unidadDeMedida,
-            @RequestParam(value = "centralizado", required = false) String centralizado,
             @RequestParam(value = "unidadDeCaja", required = false) Integer unidadDeCaja,
             @RequestParam(value = "unidadDePack", required = false) Integer unidadDePack,
             @RequestParam(value = "cajasCapa", required = false) Integer cajasCapa,
@@ -140,8 +138,6 @@ public class ProductoController {
         ProductoEntity producto = new ProductoEntity();
         producto.setDescripcion(descripcion);
         producto.setMarca(marca);
-        producto.setUnidadDeMedida(unidadDeMedida);
-        producto.setCentralizado(centralizado);
         producto.setUnidadDeCaja(unidadDeCaja);
         producto.setUnidadDePack(unidadDePack);
         producto.setCajasCapa(cajasCapa);
@@ -185,8 +181,6 @@ public class ProductoController {
             @PathVariable Long id,
             @RequestParam("descripcion") String descripcion,
             @RequestParam(value = "marca", required = false) String marca,
-            @RequestParam(value = "unidadDeMedida", required = false) String unidadDeMedida,
-            @RequestParam(value = "centralizado", required = false) String centralizado,
             @RequestParam(value = "unidadDeCaja", required = false) Integer unidadDeCaja,
             @RequestParam(value = "unidadDePack", required = false) Integer unidadDePack,
             @RequestParam(value = "cajasCapa", required = false) Integer cajasCapa,
@@ -224,8 +218,8 @@ public class ProductoController {
         producto.setId(id);
         producto.setDescripcion(descripcion);
         producto.setMarca(marca);
-        producto.setUnidadDeMedida(unidadDeMedida);
-        producto.setCentralizado(centralizado);
+        //producto.setUnidadDeMedida(unidadDeMedida);
+        //producto.setCentralizado(centralizado);
         producto.setUnidadDeCaja(unidadDeCaja);
         // producto.setUnidadDeServicio(unidadDeServicio);
         producto.setUnidadDePack(unidadDePack);

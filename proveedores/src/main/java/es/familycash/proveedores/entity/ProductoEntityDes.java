@@ -38,11 +38,11 @@ public class ProductoEntityDes {
     @Column(name = "ara_marca")
     private String marca;
 
-    @Column(name = "ara_udm_id")
-    private String unidadDeMedida;
+    //@Column(name = "ara_udm_id")
+    //private String unidadDeMedida;
 
-    @Column(name = "ara_cent")
-    private String centralizado;
+    //@Column(name = "ara_cent")
+    //private String centralizado;
 
     @Column(name = "ara_uc")
     private Integer unidadDeCaja;
