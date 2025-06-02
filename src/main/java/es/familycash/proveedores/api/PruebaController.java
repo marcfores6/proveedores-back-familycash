@@ -13,3 +13,4 @@ public class PruebaController {
         return "¡Hola desde el backend real de FamilyCash!";
     }
 }// Endpoint de prueba verificado por Miiiteer 💪
+// PruebaController activado correctamente para Railway
