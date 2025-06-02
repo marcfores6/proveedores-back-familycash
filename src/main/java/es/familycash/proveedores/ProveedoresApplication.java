@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "es.familycash.proveedores")
 public class ProveedoresApplication {
 
 	public static void main(String[] args) {
