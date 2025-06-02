@@ -12,7 +12,7 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     public void sendRecuperacionEmail(String toEmail, String token) {
-        String link = "http://localhost:4200/restablecer-password?token=" + token;
+        String link = "http://proveedores.familycash.es/restablecer-password?token=" + token;
         String subject = "Recuperación de contraseña - FamilyCash Proveedores";
         String body = "Hola, haz clic en el siguiente enlace para restablecer tu contraseña:\n\n" + link + "\n\nEste enlace expirará en 30 minutos.";
 

@@ -13,7 +13,7 @@ import jakarta.persistence.Table;
 
 
 @Entity
-@Table(name = "DT_PRO_IMG")
+@Table(name = "DT_ARA_IMG")
 public class ProductoImagenEntity {
 
     @Id
