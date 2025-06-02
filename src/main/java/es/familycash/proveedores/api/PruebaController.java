@@ -12,4 +12,4 @@ public class PruebaController {
     public String hola() {
         return "¡Hola desde el backend real de FamilyCash!";
     }
-}
+}// Endpoint de prueba verificado por Miiiteer 💪
