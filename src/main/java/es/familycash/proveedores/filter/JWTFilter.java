@@ -30,7 +30,7 @@ public class JWTFilter implements Filter {
 
         String path = httpRequest.getRequestURI();
 
-        if (path.startsWith("/auth/")) {
+        if (path.startsWith("/auth/") || path.equals("/api/hola")) {
             chain.doFilter(request, response);
             return;
         }
