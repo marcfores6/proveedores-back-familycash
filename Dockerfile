@@ -1,14 +1,12 @@
-# Usa una imagen oficial de Java 17
-FROM eclipse-temurin:17-jdk
-
-# Crea una carpeta para la app
+# Etapa 1: Compilar el JAR con Maven
+FROM maven:3.8.5-eclipse-temurin-17 AS build
 WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
 
-# Copia el JAR compilado a esa carpeta
-COPY target/*.jar app.jar
-
-# Expón el puerto en el que tu app corre
+# Etapa 2: Ejecutar el JAR con JDK más ligero
+FROM eclipse-temurin:17-jdk
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-
-# Comando para ejecutar la app
 ENTRYPOINT ["java", "-jar", "app.jar"]
