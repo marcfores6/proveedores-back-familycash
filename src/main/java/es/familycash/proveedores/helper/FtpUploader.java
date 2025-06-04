@@ -15,14 +15,11 @@ public class FtpUploader {
     private final int puerto = 21;
     private final String usuario = "sistemas@grupofamily.es";
     private final String contraseña = "DinahostingSistemas32$";
-    private final String rutaRemotaBase = "/www/assets/";
+    private final String rutaBase = "/www/assets/";
+    private final String urlBase = "https://proveedores.familycash.es/assets/";
 
-
-    public String subirArchivo(MultipartFile archivo, String nombreDestino) throws IOException {
-    return subirArchivo(archivo, nombreDestino, "/www/assets/");
-}
-
-    public String subirArchivo(MultipartFile archivo, String nombreDestino, String rutaRemota) throws IOException {
+    public String subirArchivo(MultipartFile archivo, String nombreArchivo, String subcarpetaRelativa)
+            throws IOException {
         FTPClient ftp = new FTPClient();
 
         try (InputStream inputStream = archivo.getInputStream()) {
@@ -31,14 +28,45 @@ public class FtpUploader {
             ftp.enterLocalPassiveMode();
             ftp.setFileType(FTP.BINARY_FILE_TYPE);
 
-            String rutaFinal = rutaRemota + nombreDestino;
-            boolean subido = ftp.storeFile(rutaFinal, inputStream);
+            // Crear carpetas si no existen
+            String rutaCompleta = rutaBase + subcarpetaRelativa;
+            String[] carpetas = rutaCompleta.split("/");
+            String pathAcumulado = "";
+            for (String carpeta : carpetas) {
+                if (!carpeta.isBlank()) {
+                    pathAcumulado += "/" + carpeta;
+                    ftp.makeDirectory(pathAcumulado); // crear si no existe
+                }
+            }
+            ftp.changeWorkingDirectory(pathAcumulado); // cambiar al final
 
+            boolean subido = ftp.storeFile(nombreArchivo, inputStream);
             if (!subido) {
                 throw new IOException("No se pudo subir el archivo al servidor FTP.");
             }
 
-            return "https://proveedores.familycash.es/assets/" + nombreDestino;
+            return urlBase + subcarpetaRelativa + "/" + nombreArchivo;
+        } finally {
+            if (ftp.isConnected()) {
+                ftp.logout();
+                ftp.disconnect();
+            }
+        }
+    }
+
+    public void eliminarArchivo(String rutaRemotaCompleta) throws IOException {
+        FTPClient ftp = new FTPClient();
+        try {
+            ftp.connect(servidor, puerto);
+            ftp.login(usuario, contraseña);
+            ftp.enterLocalPassiveMode();
+
+            boolean eliminado = ftp.deleteFile(rutaRemotaCompleta);
+
+            if (!eliminado) {
+                throw new IOException("No se pudo eliminar el archivo del servidor FTP: " + rutaRemotaCompleta);
+            }
+
         } finally {
             if (ftp.isConnected()) {
                 ftp.logout();
