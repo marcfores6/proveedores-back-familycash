@@ -17,7 +17,12 @@ public class FtpUploader {
     private final String contraseña = "DinahostingSistemas32$";
     private final String rutaRemotaBase = "/www/assets/";
 
-    public String subirArchivo(MultipartFile archivo, String rutaRelativa, String nombreDestino) throws IOException {
+
+    public String subirArchivo(MultipartFile archivo, String nombreDestino) throws IOException {
+    return subirArchivo(archivo, nombreDestino, "/www/assets/");
+}
+
+    public String subirArchivo(MultipartFile archivo, String nombreDestino, String rutaRemota) throws IOException {
         FTPClient ftp = new FTPClient();
 
         try (InputStream inputStream = archivo.getInputStream()) {
@@ -26,25 +31,14 @@ public class FtpUploader {
             ftp.enterLocalPassiveMode();
             ftp.setFileType(FTP.BINARY_FILE_TYPE);
 
-            // Crear carpetas si no existen
-            String[] directorios = rutaRelativa.split("/");
-            String rutaActual = rutaRemotaBase;
-            for (String dir : directorios) {
-                if (!dir.isBlank()) {
-                    rutaActual += dir + "/";
-                    ftp.makeDirectory(rutaActual);
-                    ftp.changeWorkingDirectory(rutaActual);
-                }
-            }
-
-            // Subir archivo
-            boolean subido = ftp.storeFile(nombreDestino, inputStream);
+            String rutaFinal = rutaRemota + nombreDestino;
+            boolean subido = ftp.storeFile(rutaFinal, inputStream);
 
             if (!subido) {
                 throw new IOException("No se pudo subir el archivo al servidor FTP.");
             }
 
-            return "https://proveedores.familycash.es/assets/" + rutaRelativa + "/" + nombreDestino;
+            return "https://proveedores.familycash.es/assets/" + nombreDestino;
         } finally {
             if (ftp.isConnected()) {
                 ftp.logout();
@@ -52,4 +46,5 @@ public class FtpUploader {
             }
         }
     }
+
 }

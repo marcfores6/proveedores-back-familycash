@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import es.familycash.proveedores.entity.ProductoDocumentoEntity;
 import es.familycash.proveedores.entity.ProductoEntity;
 import es.familycash.proveedores.entity.ProductoImagenEntity;
+import es.familycash.proveedores.helper.FtpUploader;
 import es.familycash.proveedores.repository.ProductoDocumentoRepository;
 import es.familycash.proveedores.repository.ProductoImagenRepository;
 
@@ -44,6 +45,9 @@ public class ProductoService {
 
     @Autowired
     ProveedorRepository oProveedorRepository;
+
+    @Autowired
+    private FtpUploader ftpUploader;
 
     private final String FTP_HOST = "proveedores.familycash.es";
     private final int FTP_PORT = 21;
@@ -73,7 +77,8 @@ public class ProductoService {
         return 1L;
     }
 
-   public ProductoEntity create(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls) throws IOException {
+    public ProductoEntity create(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls)
+            throws IOException {
         ProductoEntity guardado = oProductoRepository.save(producto);
 
         if (imagenes != null) {
@@ -82,7 +87,7 @@ public class ProductoService {
                     String extension = FilenameUtils.getExtension(file.getOriginalFilename());
                     String nombreArchivo = "producto_" + UUID.randomUUID() + "." + extension;
                     String carpeta = String.valueOf(guardado.getId());
-                    String url = subirPorFTP(file.getInputStream(), carpeta, nombreArchivo);
+                    String url = ftpUploader.subirArchivo(file, nombreArchivo);
 
                     ProductoImagenEntity imagenEntity = new ProductoImagenEntity();
                     imagenEntity.setProducto(guardado);
@@ -106,7 +111,8 @@ public class ProductoService {
         return oProductoRepository.findById(guardado.getId()).orElseThrow();
     }
 
-    public ProductoEntity update(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls) throws IOException {
+    public ProductoEntity update(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls)
+            throws IOException {
         ProductoEntity oProductoEntityFromDatabase = oProductoRepository.findById(producto.getId())
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado con id: " + producto.getId()));
 
