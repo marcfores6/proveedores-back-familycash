@@ -19,7 +19,7 @@ public class EmailService {
         String subject = "Recuperación de contraseña - FamilyCash Proveedores";
 
         String body = "<div style='font-family: Arial, sans-serif;'>" +
-            "<img src='https://proveedores.familycash.es/assets/supermercados-family-cash.png' alt='FamilyCash' style='max-width: 200px; margin-bottom: 20px;'/>" +
+            "<img src='https://proveedores.familycash.es/assets/logo-family-correo.png' alt='FamilyCash' style='max-width: 200px; margin-bottom: 20px;'/>" +
             "<h2>Recuperación de contraseña</h2>" +
             "<p>Hola, haz clic en el siguiente enlace para restablecer tu contraseña:</p>" +
             "<p><a href='" + link + "' style='color: #2c7be5; font-weight: bold;'>Restablecer contraseña</a></p>" +
