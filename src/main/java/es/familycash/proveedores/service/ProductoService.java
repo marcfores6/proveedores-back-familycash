@@ -73,16 +73,16 @@ public class ProductoService {
         return 1L;
     }
 
-   public ProductoEntity create(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls)
-            throws IOException {
-
+   public ProductoEntity create(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls) throws IOException {
         ProductoEntity guardado = oProductoRepository.save(producto);
 
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    String nombreArchivo = "producto_" + UUID.randomUUID() + "." + FilenameUtils.getExtension(file.getOriginalFilename());
-                    String url = subirPorFTP(file.getInputStream(), nombreArchivo);
+                    String extension = FilenameUtils.getExtension(file.getOriginalFilename());
+                    String nombreArchivo = "producto_" + UUID.randomUUID() + "." + extension;
+                    String carpeta = String.valueOf(guardado.getId());
+                    String url = subirPorFTP(file.getInputStream(), carpeta, nombreArchivo);
 
                     ProductoImagenEntity imagenEntity = new ProductoImagenEntity();
                     imagenEntity.setProducto(guardado);
@@ -106,8 +106,7 @@ public class ProductoService {
         return oProductoRepository.findById(guardado.getId()).orElseThrow();
     }
 
-    public ProductoEntity update(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls)
-            throws IOException {
+    public ProductoEntity update(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls) throws IOException {
         ProductoEntity oProductoEntityFromDatabase = oProductoRepository.findById(producto.getId())
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado con id: " + producto.getId()));
 
@@ -144,8 +143,10 @@ public class ProductoService {
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    String nombreArchivo = "producto_" + UUID.randomUUID() + "." + FilenameUtils.getExtension(file.getOriginalFilename());
-                    String url = subirPorFTP(file.getInputStream(), nombreArchivo);
+                    String extension = FilenameUtils.getExtension(file.getOriginalFilename());
+                    String nombreArchivo = "producto_" + UUID.randomUUID() + "." + extension;
+                    String carpeta = String.valueOf(producto.getId());
+                    String url = subirPorFTP(file.getInputStream(), carpeta, nombreArchivo);
 
                     ProductoImagenEntity imagenEntity = new ProductoImagenEntity();
                     imagenEntity.setProducto(oProductoEntityFromDatabase);
@@ -157,7 +158,7 @@ public class ProductoService {
 
         if (imagenUrls != null) {
             for (String url : imagenUrls) {
-                if (url != null && !url.isBlank()) {
+                if (url != null && !url.trim().isEmpty()) {
                     ProductoImagenEntity imagenEntity = new ProductoImagenEntity();
                     imagenEntity.setProducto(oProductoEntityFromDatabase);
                     imagenEntity.setImagenUrl(url.trim());
@@ -167,11 +168,10 @@ public class ProductoService {
         }
 
         oProductoRepository.save(oProductoEntityFromDatabase);
-
         return oProductoRepository.findById(producto.getId()).orElseThrow();
     }
 
-    private String subirPorFTP(InputStream inputStream, String nombreArchivo) throws IOException {
+    private String subirPorFTP(InputStream inputStream, String subcarpeta, String nombreArchivo) throws IOException {
         FTPClient ftp = new FTPClient();
         try {
             ftp.connect(FTP_HOST, FTP_PORT);
@@ -179,14 +179,23 @@ public class ProductoService {
             ftp.enterLocalPassiveMode();
             ftp.setFileType(FTP.BINARY_FILE_TYPE);
 
-            String rutaFinal = FTP_RUTA_BASE + nombreArchivo;
-            boolean subido = ftp.storeFile(rutaFinal, inputStream);
+            String rutaFinal = FTP_RUTA_BASE + subcarpeta + "/";
+            String[] partes = rutaFinal.split("/");
+            String pathAcumulado = "";
+            for (String parte : partes) {
+                if (!parte.isBlank()) {
+                    pathAcumulado += "/" + parte;
+                    ftp.makeDirectory(pathAcumulado);
+                    ftp.changeWorkingDirectory(pathAcumulado);
+                }
+            }
 
+            boolean subido = ftp.storeFile(nombreArchivo, inputStream);
             if (!subido) {
                 throw new IOException("No se pudo subir el archivo al servidor FTP.");
             }
 
-            return "https://proveedores.familycash.es/assets/" + nombreArchivo;
+            return "https://proveedores.familycash.es/assets/images/producto/" + subcarpeta + "/" + nombreArchivo;
         } finally {
             if (ftp.isConnected()) {
                 ftp.logout();

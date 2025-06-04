@@ -13,11 +13,11 @@ public class FtpUploader {
 
     private final String servidor = "proveedores.familycash.es";
     private final int puerto = 21;
-    private final String usuario = "sistemas@grupofamily.es";      // <- cámbialo
-    private final String contraseña = "DinahostingSistemas32$"; // <- cámbialo
-    private final String rutaRemota = "/www/assets/";
+    private final String usuario = "sistemas@grupofamily.es";
+    private final String contraseña = "DinahostingSistemas32$";
+    private final String rutaRemotaBase = "/www/assets/";
 
-    public String subirArchivo(MultipartFile archivo, String nombreDestino) throws IOException {
+    public String subirArchivo(MultipartFile archivo, String rutaRelativa, String nombreDestino) throws IOException {
         FTPClient ftp = new FTPClient();
 
         try (InputStream inputStream = archivo.getInputStream()) {
@@ -26,14 +26,25 @@ public class FtpUploader {
             ftp.enterLocalPassiveMode();
             ftp.setFileType(FTP.BINARY_FILE_TYPE);
 
-            String rutaFinal = rutaRemota + nombreDestino;
-            boolean subido = ftp.storeFile(rutaFinal, inputStream);
+            // Crear carpetas si no existen
+            String[] directorios = rutaRelativa.split("/");
+            String rutaActual = rutaRemotaBase;
+            for (String dir : directorios) {
+                if (!dir.isBlank()) {
+                    rutaActual += dir + "/";
+                    ftp.makeDirectory(rutaActual);
+                    ftp.changeWorkingDirectory(rutaActual);
+                }
+            }
+
+            // Subir archivo
+            boolean subido = ftp.storeFile(nombreDestino, inputStream);
 
             if (!subido) {
                 throw new IOException("No se pudo subir el archivo al servidor FTP.");
             }
 
-            return "https://proveedores.familycash.es/assets/" + nombreDestino;
+            return "https://proveedores.familycash.es/assets/" + rutaRelativa + "/" + nombreDestino;
         } finally {
             if (ftp.isConnected()) {
                 ftp.logout();
@@ -42,4 +53,3 @@ public class FtpUploader {
         }
     }
 }
-
