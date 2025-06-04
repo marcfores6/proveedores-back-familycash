@@ -2,6 +2,7 @@ package es.familycash.proveedores.helper;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,15 +12,25 @@ import java.io.InputStream;
 @Component
 public class FtpUploader {
 
-    private final String servidor = "proveedores.familycash.es";
-    private final int puerto = 21;
-    private final String usuario = "sistemas@grupofamily.es";
-    private final String contraseña = "DinahostingSistemas32$";
-    private final String rutaBase = "/www/assets/";
-    private final String urlBase = "https://proveedores.familycash.es/assets/";
+    @Value("${ftp.host}")
+    private String servidor;
 
-    public String subirArchivo(MultipartFile archivo, String nombreArchivo, String subcarpetaRelativa)
-            throws IOException {
+    @Value("${ftp.port}")
+    private int puerto;
+
+    @Value("${ftp.user}")
+    private String usuario;
+
+    @Value("${ftp.pass}")
+    private String contraseña;
+
+    @Value("${ftp.path}")
+    private String rutaBase;
+
+    @Value("${ftp.urlBase}")
+    private String urlBase;
+
+    public String subirArchivo(MultipartFile archivo, String nombreDestino, String subcarpeta) throws IOException {
         FTPClient ftp = new FTPClient();
 
         try (InputStream inputStream = archivo.getInputStream()) {
@@ -28,24 +39,15 @@ public class FtpUploader {
             ftp.enterLocalPassiveMode();
             ftp.setFileType(FTP.BINARY_FILE_TYPE);
 
-            // Crear carpetas si no existen
-            String rutaCompleta = rutaBase + subcarpetaRelativa;
-            String[] carpetas = rutaCompleta.split("/");
-            String pathAcumulado = "";
-            for (String carpeta : carpetas) {
-                if (!carpeta.isBlank()) {
-                    pathAcumulado += "/" + carpeta;
-                    ftp.makeDirectory(pathAcumulado); // crear si no existe
-                }
-            }
-            ftp.changeWorkingDirectory(pathAcumulado); // cambiar al final
+            String rutaFinal = rutaBase + subcarpeta + "/" + nombreDestino;
+            ftp.makeDirectory(rutaBase + subcarpeta); // intenta crear carpeta si no existe
+            boolean subido = ftp.storeFile(rutaFinal, inputStream);
 
-            boolean subido = ftp.storeFile(nombreArchivo, inputStream);
             if (!subido) {
                 throw new IOException("No se pudo subir el archivo al servidor FTP.");
             }
 
-            return urlBase + subcarpetaRelativa + "/" + nombreArchivo;
+            return urlBase + subcarpeta + "/" + nombreDestino;
         } finally {
             if (ftp.isConnected()) {
                 ftp.logout();
