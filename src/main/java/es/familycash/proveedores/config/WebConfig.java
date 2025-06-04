@@ -13,7 +13,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/images/**")
-                .addResourceLocations("file:./proveedores/imagenes-familycash/images/");
+                .addResourceLocations(
+                        "file:C:/Users/mfores/Desktop/proveedores intranet/proveedores-back-familycash/proveedores/imagenes-familycash/images/");
+
     }
 
     // 👉 Configuración global de CORS
