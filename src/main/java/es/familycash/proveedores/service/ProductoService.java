@@ -1,6 +1,7 @@
 package es.familycash.proveedores.service;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -8,9 +9,11 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.apache.commons.io.FilenameUtils;
-
+import org.apache.commons.net.ftp.FTP;
+import org.apache.commons.net.ftp.FTPClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,8 +23,6 @@ import org.springframework.web.multipart.MultipartFile;
 import es.familycash.proveedores.entity.ProductoDocumentoEntity;
 import es.familycash.proveedores.entity.ProductoEntity;
 import es.familycash.proveedores.entity.ProductoImagenEntity;
-import es.familycash.proveedores.entity.ProductoImagenEntityDes;
-import es.familycash.proveedores.helper.ImagePathResolver;
 import es.familycash.proveedores.repository.ProductoDocumentoRepository;
 import es.familycash.proveedores.repository.ProductoImagenRepository;
 
@@ -43,6 +44,12 @@ public class ProductoService {
 
     @Autowired
     ProveedorRepository oProveedorRepository;
+
+    private final String FTP_HOST = "ftp.proveedores.familycash.es";
+    private final int FTP_PORT = 21;
+    private final String FTP_USER = "sistemas@grupofamily.es"; // Cambiar
+    private final String FTP_PASS = "DinahostingSistemas32$"; // Cambiar
+    private final String FTP_RUTA_BASE = "/www/assets/";
 
     public Page<ProductoEntity> getPage(Pageable oPageable, Optional<String> filter) {
         if (filter.isPresent()) {
@@ -66,29 +73,25 @@ public class ProductoService {
         return 1L;
     }
 
-    public ProductoEntity create(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls)
+   public ProductoEntity create(ProductoEntity producto, List<MultipartFile> imagenes, List<String> imagenUrls)
             throws IOException {
 
         ProductoEntity guardado = oProductoRepository.save(producto);
 
-        // Procesar imágenes por archivo
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    ImagePathResolver.ImagePath pathInfo = ImagePathResolver.generate("producto", guardado.getId(),
-                            file.getOriginalFilename());
-                    Files.write(pathInfo.absolutePath, file.getBytes());
+                    String nombreArchivo = "producto_" + UUID.randomUUID() + "." + FilenameUtils.getExtension(file.getOriginalFilename());
+                    String url = subirPorFTP(file.getInputStream(), nombreArchivo);
 
                     ProductoImagenEntity imagenEntity = new ProductoImagenEntity();
                     imagenEntity.setProducto(guardado);
-                    imagenEntity.setImagenUrl(pathInfo.relativeUrl);
+                    imagenEntity.setImagenUrl(url);
                     oProductoImagenRepository.save(imagenEntity);
-
                 }
             }
         }
 
-        // Procesar imágenes por URL
         if (imagenUrls != null) {
             for (String url : imagenUrls) {
                 if (url != null && !url.trim().isEmpty()) {
@@ -108,13 +111,9 @@ public class ProductoService {
         ProductoEntity oProductoEntityFromDatabase = oProductoRepository.findById(producto.getId())
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado con id: " + producto.getId()));
 
-        // Copiar valores del producto
         oProductoEntityFromDatabase.setDescripcion(producto.getDescripcion());
         oProductoEntityFromDatabase.setMarca(producto.getMarca());
-        // oProductoEntityFromDatabase.setUnidadDeMedida(producto.getUnidadDeMedida());
-        // oProductoEntityFromDatabase.setCentralizado(producto.getCentralizado());
         oProductoEntityFromDatabase.setUnidadDeCaja(producto.getUnidadDeCaja());
-        // oProductoEntityFromDatabase.setUnidadDeServicio(producto.getUnidadDeServicio());
         oProductoEntityFromDatabase.setUnidadDePack(producto.getUnidadDePack());
         oProductoEntityFromDatabase.setCajasCapa(producto.getCajasCapa());
         oProductoEntityFromDatabase.setCajasPalet(producto.getCajasPalet());
@@ -142,23 +141,20 @@ public class ProductoService {
         oProductoEntityFromDatabase.setMoq(producto.getMoq());
         oProductoEntityFromDatabase.setMultiploDePedido(producto.getMultiploDePedido());
 
-        // Procesar imágenes por archivo
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    ImagePathResolver.ImagePath pathInfo = ImagePathResolver.generate("producto", oProductoEntityFromDatabase.getId(), file.getOriginalFilename());
-                    Files.write(pathInfo.absolutePath, file.getBytes());
+                    String nombreArchivo = "producto_" + UUID.randomUUID() + "." + FilenameUtils.getExtension(file.getOriginalFilename());
+                    String url = subirPorFTP(file.getInputStream(), nombreArchivo);
 
                     ProductoImagenEntity imagenEntity = new ProductoImagenEntity();
                     imagenEntity.setProducto(oProductoEntityFromDatabase);
-                    imagenEntity.setImagenUrl(pathInfo.relativeUrl);
+                    imagenEntity.setImagenUrl(url);
                     oProductoImagenRepository.save(imagenEntity);
-
                 }
             }
         }
 
-        // Procesar imágenes por URL
         if (imagenUrls != null) {
             for (String url : imagenUrls) {
                 if (url != null && !url.isBlank()) {
@@ -173,6 +169,30 @@ public class ProductoService {
         oProductoRepository.save(oProductoEntityFromDatabase);
 
         return oProductoRepository.findById(producto.getId()).orElseThrow();
+    }
+
+    private String subirPorFTP(InputStream inputStream, String nombreArchivo) throws IOException {
+        FTPClient ftp = new FTPClient();
+        try {
+            ftp.connect(FTP_HOST, FTP_PORT);
+            ftp.login(FTP_USER, FTP_PASS);
+            ftp.enterLocalPassiveMode();
+            ftp.setFileType(FTP.BINARY_FILE_TYPE);
+
+            String rutaFinal = FTP_RUTA_BASE + nombreArchivo;
+            boolean subido = ftp.storeFile(rutaFinal, inputStream);
+
+            if (!subido) {
+                throw new IOException("No se pudo subir el archivo al servidor FTP.");
+            }
+
+            return "https://proveedores.familycash.es/assets/" + nombreArchivo;
+        } finally {
+            if (ftp.isConnected()) {
+                ftp.logout();
+                ftp.disconnect();
+            }
+        }
     }
 
     public Long deleteAll() {

@@ -1,6 +1,7 @@
 package es.familycash.proveedores.service;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -8,9 +9,11 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.apache.commons.io.FilenameUtils;
-
+import org.apache.commons.net.ftp.FTP;
+import org.apache.commons.net.ftp.FTPClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -44,6 +47,12 @@ public class ProductoServiceDes {
     @Autowired
     ProveedorRepositoryDes oProveedorRepositoryDes;
 
+    private final String FTP_HOST = "ftp.proveedores.familycash.es";
+    private final int FTP_PORT = 21;
+    private final String FTP_USER = "sistemas@grupofamily.es"; // Cambiar
+    private final String FTP_PASS = "DinahostingSistemas32$"; // Cambiar
+    private final String FTP_RUTA_BASE = "/www/assets/";
+
     public Page<ProductoEntityDes> getPage(Pageable oPageable, Optional<String> filter) {
         if (filter.isPresent()) {
             return oProductoRepositoryDes.findByDescripcionContaining(filter.get(), oPageable);
@@ -66,29 +75,23 @@ public class ProductoServiceDes {
         return 1L;
     }
 
-    public ProductoEntityDes create(ProductoEntityDes producto, List<MultipartFile> imagenes, List<String> imagenUrls)
-            throws IOException {
-
+    public ProductoEntityDes create(ProductoEntityDes producto, List<MultipartFile> imagenes, List<String> imagenUrls) throws IOException {
         ProductoEntityDes guardado = oProductoRepositoryDes.save(producto);
 
-        // Procesar imágenes por archivo
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    ImagePathResolver.ImagePath pathInfo = ImagePathResolver.generate("producto", guardado.getId(),
-                            file.getOriginalFilename());
-                    Files.write(pathInfo.absolutePath, file.getBytes());
+                    String nombreArchivo = "producto_" + UUID.randomUUID() + "." + FilenameUtils.getExtension(file.getOriginalFilename());
+                    String url = subirPorFTP(file.getInputStream(), nombreArchivo);
 
                     ProductoImagenEntityDes imagenEntity = new ProductoImagenEntityDes();
                     imagenEntity.setProducto(guardado);
-                    imagenEntity.setImagenUrl(pathInfo.relativeUrl);
+                    imagenEntity.setImagenUrl(url);
                     oProductoImagenRepositoryDes.save(imagenEntity);
-
                 }
             }
         }
 
-        // Procesar imágenes por URL
         if (imagenUrls != null) {
             for (String url : imagenUrls) {
                 if (url != null && !url.trim().isEmpty()) {
@@ -103,18 +106,13 @@ public class ProductoServiceDes {
         return oProductoRepositoryDes.findById(guardado.getId()).orElseThrow();
     }
 
-    public ProductoEntityDes update(ProductoEntityDes producto, List<MultipartFile> imagenes, List<String> imagenUrls)
-            throws IOException {
+    public ProductoEntityDes update(ProductoEntityDes producto, List<MultipartFile> imagenes, List<String> imagenUrls) throws IOException {
         ProductoEntityDes oProductoEntityDesFromDatabase = oProductoRepositoryDes.findById(producto.getId())
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado con id: " + producto.getId()));
 
-        // Copiar valores del producto
         oProductoEntityDesFromDatabase.setDescripcion(producto.getDescripcion());
         oProductoEntityDesFromDatabase.setMarca(producto.getMarca());
-        // oProductoEntityDesFromDatabase.setUnidadDeMedida(producto.getUnidadDeMedida());
-        // oProductoEntityDesFromDatabase.setCentralizado(producto.getCentralizado());
         oProductoEntityDesFromDatabase.setUnidadDeCaja(producto.getUnidadDeCaja());
-        // oProductoEntityDesFromDatabase.setUnidadDeServicio(producto.getUnidadDeServicio());
         oProductoEntityDesFromDatabase.setUnidadDePack(producto.getUnidadDePack());
         oProductoEntityDesFromDatabase.setCajasCapa(producto.getCajasCapa());
         oProductoEntityDesFromDatabase.setCajasPalet(producto.getCajasPalet());
@@ -142,23 +140,20 @@ public class ProductoServiceDes {
         oProductoEntityDesFromDatabase.setMoq(producto.getMoq());
         oProductoEntityDesFromDatabase.setMultiploDePedido(producto.getMultiploDePedido());
 
-        // Procesar imágenes por archivo
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    ImagePathResolver.ImagePath pathInfo = ImagePathResolver.generate("producto", oProductoEntityDesFromDatabase.getId(), file.getOriginalFilename());
-                    Files.write(pathInfo.absolutePath, file.getBytes());
+                    String nombreArchivo = "producto_" + UUID.randomUUID() + "." + FilenameUtils.getExtension(file.getOriginalFilename());
+                    String url = subirPorFTP(file.getInputStream(), nombreArchivo);
 
-                    ProductoImagenEntityDes imagenEntityDes = new ProductoImagenEntityDes();
-                    imagenEntityDes.setProducto(oProductoEntityDesFromDatabase);
-                    imagenEntityDes.setImagenUrl(pathInfo.relativeUrl);
-                    oProductoImagenRepositoryDes.save(imagenEntityDes);
-
+                    ProductoImagenEntityDes imagenEntity = new ProductoImagenEntityDes();
+                    imagenEntity.setProducto(oProductoEntityDesFromDatabase);
+                    imagenEntity.setImagenUrl(url);
+                    oProductoImagenRepositoryDes.save(imagenEntity);
                 }
             }
         }
 
-        // Procesar imágenes por URL
         if (imagenUrls != null) {
             for (String url : imagenUrls) {
                 if (url != null && !url.isBlank()) {
@@ -173,6 +168,30 @@ public class ProductoServiceDes {
         oProductoRepositoryDes.save(oProductoEntityDesFromDatabase);
 
         return oProductoRepositoryDes.findById(producto.getId()).orElseThrow();
+    }
+
+    private String subirPorFTP(InputStream inputStream, String nombreArchivo) throws IOException {
+        FTPClient ftp = new FTPClient();
+        try {
+            ftp.connect(FTP_HOST, FTP_PORT);
+            ftp.login(FTP_USER, FTP_PASS);
+            ftp.enterLocalPassiveMode();
+            ftp.setFileType(FTP.BINARY_FILE_TYPE);
+
+            String rutaFinal = FTP_RUTA_BASE + nombreArchivo;
+            boolean subido = ftp.storeFile(rutaFinal, inputStream);
+
+            if (!subido) {
+                throw new IOException("No se pudo subir el archivo al servidor FTP.");
+            }
+
+            return "https://proveedores.familycash.es/assets/" + nombreArchivo;
+        } finally {
+            if (ftp.isConnected()) {
+                ftp.logout();
+                ftp.disconnect();
+            }
+        }
     }
 
     public Long deleteAll() {
