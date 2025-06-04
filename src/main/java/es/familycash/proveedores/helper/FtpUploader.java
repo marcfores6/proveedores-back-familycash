@@ -34,13 +34,22 @@ public class FtpUploader {
         FTPClient ftp = new FTPClient();
 
         try (InputStream inputStream = archivo.getInputStream()) {
+            System.out.println("Conectando al servidor FTP: " + servidor + ":" + puerto);
             ftp.connect(servidor, puerto);
-            ftp.login(usuario, contraseña);
+
+            boolean login = ftp.login(usuario, contraseña);
+            if (!login) {
+                throw new IOException("No se pudo autenticar en el servidor FTP");
+            }
+
             ftp.enterLocalPassiveMode();
             ftp.setFileType(FTP.BINARY_FILE_TYPE);
 
             String rutaFinal = rutaBase + subcarpeta + "/" + nombreDestino;
-            ftp.makeDirectory(rutaBase + subcarpeta); // intenta crear carpeta si no existe
+            System.out.println("Ruta destino en FTP: " + rutaFinal);
+
+            crearDirectoriosRecursivos(ftp, rutaBase + subcarpeta);
+
             boolean subido = ftp.storeFile(rutaFinal, inputStream);
 
             if (!subido) {
@@ -59,6 +68,7 @@ public class FtpUploader {
     public void eliminarArchivo(String rutaRemotaCompleta) throws IOException {
         FTPClient ftp = new FTPClient();
         try {
+            System.out.println("Conectando para eliminar archivo: " + rutaRemotaCompleta);
             ftp.connect(servidor, puerto);
             ftp.login(usuario, contraseña);
             ftp.enterLocalPassiveMode();
@@ -77,4 +87,13 @@ public class FtpUploader {
         }
     }
 
+    private void crearDirectoriosRecursivos(FTPClient ftp, String ruta) throws IOException {
+        String[] directorios = ruta.split("/");
+        String rutaActual = "";
+        for (String dir : directorios) {
+            if (dir == null || dir.trim().isEmpty()) continue;
+            rutaActual += "/" + dir;
+            ftp.makeDirectory(rutaActual);
+        }
+    }
 }
