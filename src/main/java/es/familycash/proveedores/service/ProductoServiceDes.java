@@ -19,7 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import es.familycash.proveedores.entity.ProductoDocumentoEntityDes;
 import es.familycash.proveedores.entity.ProductoEntityDes;
+import es.familycash.proveedores.entity.ProductoImagenEntity;
 import es.familycash.proveedores.entity.ProductoImagenEntityDes;
+import es.familycash.proveedores.helper.ImagePathResolver;
 import es.familycash.proveedores.repository.ProductoDocumentoRepositoryDes;
 import es.familycash.proveedores.repository.ProductoImagenRepositoryDes;
 
@@ -73,16 +75,13 @@ public class ProductoServiceDes {
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    String baseFolder = "./proveedores/imagenes-familycash/images/producto/" + guardado.getId() + "/";
-                    Files.createDirectories(Paths.get(baseFolder));
-
-                    String filename = file.getOriginalFilename();
-                    Path path = Paths.get(baseFolder + filename);
-                    Files.write(path, file.getBytes());
+                    ImagePathResolver.ImagePath pathInfo = ImagePathResolver.generate("producto", guardado.getId(),
+                            file.getOriginalFilename());
+                    Files.write(pathInfo.absolutePath, file.getBytes());
 
                     ProductoImagenEntityDes imagenEntity = new ProductoImagenEntityDes();
                     imagenEntity.setProducto(guardado);
-                    imagenEntity.setImagenUrl("/images/producto/" + guardado.getId() + "/" + filename);
+                    imagenEntity.setImagenUrl(pathInfo.relativeUrl);
                     oProductoImagenRepositoryDes.save(imagenEntity);
 
                 }
@@ -112,8 +111,8 @@ public class ProductoServiceDes {
         // Copiar valores del producto
         oProductoEntityDesFromDatabase.setDescripcion(producto.getDescripcion());
         oProductoEntityDesFromDatabase.setMarca(producto.getMarca());
-        //oProductoEntityDesFromDatabase.setUnidadDeMedida(producto.getUnidadDeMedida());
-        //oProductoEntityDesFromDatabase.setCentralizado(producto.getCentralizado());
+        // oProductoEntityDesFromDatabase.setUnidadDeMedida(producto.getUnidadDeMedida());
+        // oProductoEntityDesFromDatabase.setCentralizado(producto.getCentralizado());
         oProductoEntityDesFromDatabase.setUnidadDeCaja(producto.getUnidadDeCaja());
         // oProductoEntityDesFromDatabase.setUnidadDeServicio(producto.getUnidadDeServicio());
         oProductoEntityDesFromDatabase.setUnidadDePack(producto.getUnidadDePack());
@@ -147,19 +146,13 @@ public class ProductoServiceDes {
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    String baseFolder = "./proveedores/imagenes-familycash/images/producto/"
-                            + oProductoEntityDesFromDatabase.getId() + "/";
-                    Files.createDirectories(Paths.get(baseFolder));
+                    ImagePathResolver.ImagePath pathInfo = ImagePathResolver.generate("producto", oProductoEntityDesFromDatabase.getId(), file.getOriginalFilename());
+                    Files.write(pathInfo.absolutePath, file.getBytes());
 
-                    String filename = file.getOriginalFilename();
-                    Path path = Paths.get(baseFolder + filename);
-                    Files.write(path, file.getBytes());
-
-                    ProductoImagenEntityDes imagenEntity = new ProductoImagenEntityDes();
-                    imagenEntity.setProducto(oProductoEntityDesFromDatabase);
-                    imagenEntity.setImagenUrl(
-                            "/images/producto/" + oProductoEntityDesFromDatabase.getId() + "/" + filename);
-                    oProductoImagenRepositoryDes.save(imagenEntity);
+                    ProductoImagenEntityDes imagenEntityDes = new ProductoImagenEntityDes();
+                    imagenEntityDes.setProducto(oProductoEntityDesFromDatabase);
+                    imagenEntityDes.setImagenUrl(pathInfo.relativeUrl);
+                    oProductoImagenRepositoryDes.save(imagenEntityDes);
 
                 }
             }

@@ -20,6 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 import es.familycash.proveedores.entity.ProductoDocumentoEntity;
 import es.familycash.proveedores.entity.ProductoEntity;
 import es.familycash.proveedores.entity.ProductoImagenEntity;
+import es.familycash.proveedores.entity.ProductoImagenEntityDes;
+import es.familycash.proveedores.helper.ImagePathResolver;
 import es.familycash.proveedores.repository.ProductoDocumentoRepository;
 import es.familycash.proveedores.repository.ProductoImagenRepository;
 
@@ -73,16 +75,13 @@ public class ProductoService {
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    String baseFolder = "./proveedores/imagenes-familycash/images/producto/" + guardado.getId() + "/";
-                    Files.createDirectories(Paths.get(baseFolder));
-
-                    String filename = file.getOriginalFilename();
-                    Path path = Paths.get(baseFolder + filename);
-                    Files.write(path, file.getBytes());
+                    ImagePathResolver.ImagePath pathInfo = ImagePathResolver.generate("producto", guardado.getId(),
+                            file.getOriginalFilename());
+                    Files.write(pathInfo.absolutePath, file.getBytes());
 
                     ProductoImagenEntity imagenEntity = new ProductoImagenEntity();
                     imagenEntity.setProducto(guardado);
-                    imagenEntity.setImagenUrl("/images/producto/" + guardado.getId() + "/" + filename);
+                    imagenEntity.setImagenUrl(pathInfo.relativeUrl);
                     oProductoImagenRepository.save(imagenEntity);
 
                 }
@@ -112,8 +111,8 @@ public class ProductoService {
         // Copiar valores del producto
         oProductoEntityFromDatabase.setDescripcion(producto.getDescripcion());
         oProductoEntityFromDatabase.setMarca(producto.getMarca());
-        //oProductoEntityFromDatabase.setUnidadDeMedida(producto.getUnidadDeMedida());
-        //oProductoEntityFromDatabase.setCentralizado(producto.getCentralizado());
+        // oProductoEntityFromDatabase.setUnidadDeMedida(producto.getUnidadDeMedida());
+        // oProductoEntityFromDatabase.setCentralizado(producto.getCentralizado());
         oProductoEntityFromDatabase.setUnidadDeCaja(producto.getUnidadDeCaja());
         // oProductoEntityFromDatabase.setUnidadDeServicio(producto.getUnidadDeServicio());
         oProductoEntityFromDatabase.setUnidadDePack(producto.getUnidadDePack());
@@ -147,16 +146,12 @@ public class ProductoService {
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    String baseFolder = "./proveedores/imagenes-familycash/images/producto/" + oProductoEntityFromDatabase.getId()  + "/";
-                    Files.createDirectories(Paths.get(baseFolder));
-
-                    String filename = file.getOriginalFilename();
-                    Path path = Paths.get(baseFolder + filename);
-                    Files.write(path, file.getBytes());
+                    ImagePathResolver.ImagePath pathInfo = ImagePathResolver.generate("producto", oProductoEntityFromDatabase.getId(), file.getOriginalFilename());
+                    Files.write(pathInfo.absolutePath, file.getBytes());
 
                     ProductoImagenEntity imagenEntity = new ProductoImagenEntity();
                     imagenEntity.setProducto(oProductoEntityFromDatabase);
-                    imagenEntity.setImagenUrl("/images/producto/" + oProductoEntityFromDatabase.getId() + "/" + filename);
+                    imagenEntity.setImagenUrl(pathInfo.relativeUrl);
                     oProductoImagenRepository.save(imagenEntity);
 
                 }
