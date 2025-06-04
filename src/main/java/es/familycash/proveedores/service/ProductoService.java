@@ -45,7 +45,7 @@ public class ProductoService {
     @Autowired
     ProveedorRepository oProveedorRepository;
 
-    private final String FTP_HOST = "ftp.proveedores.familycash.es";
+    private final String FTP_HOST = "proveedores.familycash.es";
     private final int FTP_PORT = 21;
     private final String FTP_USER = "sistemas@grupofamily.es"; // Cambiar
     private final String FTP_PASS = "DinahostingSistemas32$"; // Cambiar

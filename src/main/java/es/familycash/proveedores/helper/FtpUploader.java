@@ -11,7 +11,7 @@ import java.io.InputStream;
 @Component
 public class FtpUploader {
 
-    private final String servidor = "ftp.proveedores.familycash.es";
+    private final String servidor = "proveedores.familycash.es";
     private final int puerto = 21;
     private final String usuario = "sistemas@grupofamily.es";      // <- cámbialo
     private final String contraseña = "DinahostingSistemas32$"; // <- cámbialo
