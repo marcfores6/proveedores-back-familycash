@@ -14,23 +14,30 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     public void sendRecuperacionEmail(String toEmail, String token) {
-        try {
-            String link = "http://proveedores.familycash.es/restablecer-password?token=" + token;
-            String subject = "Recuperación de contraseña - FamilyCash Proveedores";
-            String body = "Hola, haz clic en el siguiente enlace para restablecer tu contraseña:<br><br>" +
-                    "<a href=\"" + link + "\">Restablecer contraseña</a><br><br>Este enlace expirará en 30 minutos.";
+    try {
+        String link = "http://proveedores.familycash.es/restablecer-password?token=" + token;
+        String subject = "Recuperación de contraseña - FamilyCash Proveedores";
 
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        String body = "<div style='font-family: Arial, sans-serif;'>" +
+            "<img src='https://proveedores.familycash.es/assets/supermercados-family-cash.png' alt='FamilyCash' style='max-width: 200px; margin-bottom: 20px;'/>" +
+            "<h2>Recuperación de contraseña</h2>" +
+            "<p>Hola, haz clic en el siguiente enlace para restablecer tu contraseña:</p>" +
+            "<p><a href='" + link + "' style='color: #2c7be5; font-weight: bold;'>Restablecer contraseña</a></p>" +
+            "<p style='color: #666;'>Este enlace expirará en 30 minutos.</p>" +
+            "<br><hr><small>Este correo ha sido generado automáticamente por FamilyCash Proveedores.</small></div>";
 
-            helper.setFrom("avisosweb@familycash.es"); // 👈 ESTO ES LO QUE HACE FALTA
-            helper.setTo(toEmail);
-            helper.setSubject(subject);
-            helper.setText(body, true); // true = HTML
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            mailSender.send(message);
-        } catch (Exception e) {
-            System.err.println("Error al enviar el correo: " + e.getMessage());
-        }
+        helper.setFrom("avisosweb@familycash.es");
+        helper.setTo(toEmail);
+        helper.setSubject(subject);
+        helper.setText(body, true); // true = HTML
+
+        mailSender.send(message);
+    } catch (Exception e) {
+        System.err.println("Error al enviar el correo: " + e.getMessage());
     }
+}
+
 }
