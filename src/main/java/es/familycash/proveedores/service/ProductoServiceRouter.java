@@ -106,17 +106,9 @@ public class ProductoServiceRouter {
 
     public void deleteDocumento(Long id) {
         if (isDev()) {
-            try {
                 productoServiceDes.eliminarDocumento(id);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
         } else {
-            try {
                 productoService.eliminarDocumento(id);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
         }
     }
 

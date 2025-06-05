@@ -22,9 +22,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import es.familycash.proveedores.entity.ProductoDocumentoEntityDes;
 import es.familycash.proveedores.entity.ProductoEntityDes;
-import es.familycash.proveedores.entity.ProductoImagenEntity;
 import es.familycash.proveedores.entity.ProductoImagenEntityDes;
-import es.familycash.proveedores.helper.ImagePathResolver;
+import es.familycash.proveedores.helper.FtpUploader;
 import es.familycash.proveedores.repository.ProductoDocumentoRepositoryDes;
 import es.familycash.proveedores.repository.ProductoImagenRepositoryDes;
 
@@ -46,6 +45,9 @@ public class ProductoServiceDes {
 
     @Autowired
     ProveedorRepositoryDes oProveedorRepositoryDes;
+
+    @Autowired
+    private FtpUploader ftpUploader;
 
     private final String FTP_HOST = "proveedores.familycash.es";
     private final int FTP_PORT = 21;
@@ -324,17 +326,25 @@ public class ProductoServiceDes {
         return oProductoDocumentoRepositoryDes.findByProductoId(productoId);
     }
 
-    public void eliminarDocumento(Long documentoId) throws IOException {
-        ProductoDocumentoEntityDes documento = oProductoDocumentoRepositoryDes.findById(documentoId)
-                .orElseThrow(() -> new EntityNotFoundException("Documento no encontrado"));
+    public void eliminarDocumento(Long documentoId) {
+    ProductoDocumentoEntityDes documento = oProductoDocumentoRepositoryDes.findById(documentoId)
+            .orElseThrow(() -> new EntityNotFoundException("Documento no encontrado"));
 
-        // Eliminar el archivo físico
-        String filePath = "src/main/resources/static" + documento.getDocumentoUrl();
-        Files.deleteIfExists(Paths.get(filePath));
+    String urlPublica = documento.getDocumentoUrl(); // https://proveedores.familycash.es/assets/...
+    String rutaRelativa = urlPublica.replace("https://proveedores.familycash.es/assets/", "");
+    String rutaFtpCompleta = "/www/assets/" + rutaRelativa;
 
-        // Eliminar la referencia de la base de datos
-        oProductoDocumentoRepositoryDes.delete(documento);
+    try {
+        ftpUploader.eliminarArchivo(rutaFtpCompleta);
+        System.out.println("🗑️ Documento eliminado del FTP: " + rutaFtpCompleta);
+    } catch (IOException e) {
+        System.err.println("❌ Error al eliminar documento del FTP: " + e.getMessage());
+        // Puedes dejarlo así o lanzar una excepción controlada si quieres avisar
+        // throw new RuntimeException("No se pudo eliminar el archivo físico");
     }
+
+    oProductoDocumentoRepositoryDes.delete(documento);
+}
 
     public ProductoEntityDes enviarProducto(Long id) throws Exception {
         ProductoEntityDes producto = oProductoRepositoryDes.findById(id)

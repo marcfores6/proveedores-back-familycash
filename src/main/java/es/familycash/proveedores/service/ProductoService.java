@@ -1,19 +1,11 @@
 package es.familycash.proveedores.service;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.net.ftp.FTP;
-import org.apache.commons.net.ftp.FTPClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -49,11 +41,6 @@ public class ProductoService {
     @Autowired
     private FtpUploader ftpUploader;
 
-    private final String FTP_HOST = "proveedores.familycash.es";
-    private final int FTP_PORT = 21;
-    private final String FTP_USER = "sistemas@grupofamily.es"; // Cambiar
-    private final String FTP_PASS = "DinahostingSistemas32$"; // Cambiar
-    private final String FTP_RUTA_BASE = "/www/assets/";
 
     public Page<ProductoEntity> getPage(Pageable oPageable, Optional<String> filter) {
         if (filter.isPresent()) {
@@ -257,21 +244,26 @@ public class ProductoService {
         return oProductoDocumentoRepository.findByProductoId(productoId);
     }
 
-    public void eliminarDocumento(Long documentoId) throws IOException {
-        ProductoDocumentoEntity documento = oProductoDocumentoRepository.findById(documentoId)
-                .orElseThrow(() -> new EntityNotFoundException("Documento no encontrado"));
+    public void eliminarDocumento(Long documentoId) {
+    ProductoDocumentoEntity documento = oProductoDocumentoRepository.findById(documentoId)
+            .orElseThrow(() -> new EntityNotFoundException("Documento no encontrado"));
 
-        // Convertir URL pública en ruta remota del FTP
-        String urlPublica = documento.getDocumentoUrl(); // https://proveedores.familycash.es/assets/...
-        String rutaRelativa = urlPublica.replace("https://proveedores.familycash.es/assets/", "");
-        String rutaFtpCompleta = "/www/assets/" + rutaRelativa;
+    String urlPublica = documento.getDocumentoUrl(); // https://proveedores.familycash.es/assets/...
+    String rutaRelativa = urlPublica.replace("https://proveedores.familycash.es/assets/", "");
+    String rutaFtpCompleta = "/www/assets/" + rutaRelativa;
 
-        // Eliminar del FTP
+    try {
         ftpUploader.eliminarArchivo(rutaFtpCompleta);
-
-        // Eliminar la referencia de la base de datos
-        oProductoDocumentoRepository.delete(documento);
+        System.out.println("🗑️ Documento eliminado del FTP: " + rutaFtpCompleta);
+    } catch (IOException e) {
+        System.err.println("❌ Error al eliminar documento del FTP: " + e.getMessage());
+        // Puedes dejarlo así o lanzar una excepción controlada si quieres avisar
+        // throw new RuntimeException("No se pudo eliminar el archivo físico");
     }
+
+    oProductoDocumentoRepository.delete(documento);
+}
+
 
     public ProductoEntity enviarProducto(Long id) throws Exception {
         ProductoEntity producto = oProductoRepository.findById(id)
