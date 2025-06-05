@@ -21,7 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import es.familycash.proveedores.entity.ProductoDocumentoEntityDes;
+import es.familycash.proveedores.entity.ProductoDocumentoEntityDes;
+import es.familycash.proveedores.entity.ProductoEntity;
 import es.familycash.proveedores.entity.ProductoEntityDes;
+import es.familycash.proveedores.entity.ProductoImagenEntity;
 import es.familycash.proveedores.entity.ProductoImagenEntityDes;
 import es.familycash.proveedores.helper.FtpUploader;
 import es.familycash.proveedores.repository.ProductoDocumentoRepositoryDes;
@@ -189,27 +192,21 @@ public class ProductoServiceDes {
 
         String imagenUrl = imagen.getImagenUrl();
 
-        // Solo eliminamos el archivo si la imagen está en el sistema de archivos (no es
-        // URL externa)
-        if (imagenUrl != null && imagenUrl.startsWith("/images/")) {
-            String baseFolder = "C:\\imagenes-familycash";
-            Path rutaCompleta = Paths.get(baseFolder, imagenUrl.replaceFirst("/", "").replace("/", "\\"));
+        // Solo eliminamos del FTP si no es una URL externa
+        if (imagenUrl != null && imagenUrl.startsWith("https://proveedores.familycash.es/assets/")) {
+            String rutaRelativa = imagenUrl.replace("https://proveedores.familycash.es/assets/", "");
+            String rutaFtpCompleta = "/www/assets/" + rutaRelativa;
 
             try {
-                boolean deleted = Files.deleteIfExists(rutaCompleta);
-                if (deleted) {
-                    System.out.println("🗑️ Imagen eliminada físicamente: " + rutaCompleta);
-                } else {
-                    System.out.println("⚠️ No se encontró la imagen para eliminar: " + rutaCompleta);
-                }
+                ftpUploader.eliminarArchivo(rutaFtpCompleta);
+                System.out.println("🗑️ Imagen eliminada del FTP: " + rutaFtpCompleta);
             } catch (IOException e) {
-                System.err.println("❌ Error eliminando la imagen del disco: " + e.getMessage());
+                System.err.println("❌ Error eliminando la imagen del FTP: " + e.getMessage());
             }
         } else {
             System.out.println("🌐 Imagen externa no eliminada físicamente: " + imagenUrl);
         }
 
-        // Finalmente, eliminamos la entrada de la base de datos
         oProductoImagenRepositoryDes.delete(imagen);
     }
 
@@ -219,17 +216,7 @@ public class ProductoServiceDes {
     }
 
     public void guardarDocumentosDelProducto(ProductoEntityDes producto, List<MultipartFile> documentos,
-            List<String> tiposDocumentos)
-            throws IOException {
-        if (documentos == null || documentos.isEmpty()) {
-            return;
-        }
-
-        // Ruta base donde se guardan los documentos
-        String baseFolder = "./proveedores/imagenes-familycash/images/docs/producto/" + producto.getId() + "/";
-        Files.createDirectories(Paths.get(baseFolder));
-
-        List<ProductoDocumentoEntityDes> documentosParaGuardar = new ArrayList<>();
+            List<String> tiposDocumentos) throws IOException {
 
         for (int i = 0; i < documentos.size(); i++) {
             MultipartFile documento = documentos.get(i);
@@ -242,28 +229,24 @@ public class ProductoServiceDes {
             }
 
             // Generar nombre del archivo con el formato CODPROVEEDOR_EAN_T.pdf
-            String codProveedor = producto.getProveedor() != null ? producto.getProveedor()
-                    : "SINPROV";
+            String codProveedor = producto.getProveedor() != null ? producto.getProveedor() : "SINPROV";
             String ean = producto.getEan() != null ? producto.getEan() : "SINEAN";
             String extension = FilenameUtils.getExtension(documento.getOriginalFilename());
             String nuevoNombre = codProveedor + "_" + ean + "_" + tipo + "." + extension;
 
-            String filePath = baseFolder + nuevoNombre;
-            Path path = Paths.get(filePath);
-            Files.write(path, documento.getBytes());
+            // Subir al FTP
+            String subcarpetaRelativa = "docs/producto/" + producto.getId();
+            String urlFtp = ftpUploader.subirArchivo(documento, nuevoNombre, subcarpetaRelativa);
 
-            // Crear la entidad y asignar sus campos
-            ProductoDocumentoEntityDes documentoEntity = new ProductoDocumentoEntityDes();
-            documentoEntity.setProducto(producto);
-            documentoEntity.setDocumentoUrl("/docs/producto/" + producto.getId() + "/" + nuevoNombre);
-            documentoEntity.setNombreOriginal(documento.getOriginalFilename());
-            documentoEntity.setTipo(tipo);
+            // Crear y guardar el documento
+            ProductoDocumentoEntityDes documentoEntityDes = new ProductoDocumentoEntityDes();
+            documentoEntityDes.setProducto(producto);
+            documentoEntityDes.setDocumentoUrl(urlFtp);
+            documentoEntityDes.setNombreOriginal(documento.getOriginalFilename());
+            documentoEntityDes.setTipo(tipo);
 
-            documentosParaGuardar.add(documentoEntity);
+            oProductoDocumentoRepositoryDes.save(documentoEntityDes); // 👈 Aquí está la solución
         }
-
-        // Guardado masivo en base de datos
-        oProductoDocumentoRepositoryDes.saveAll(documentosParaGuardar);
     }
 
     public void guardarDocumentoExistente(Long idDocumento, String nuevoTipo) throws IOException {

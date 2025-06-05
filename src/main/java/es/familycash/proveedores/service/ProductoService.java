@@ -104,7 +104,36 @@ public class ProductoService {
         ProductoEntity oProductoEntityFromDatabase = oProductoRepository.findById(producto.getId())
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado con id: " + producto.getId()));
 
-        // ... actualizar campos como ya lo hacías ...
+        oProductoEntityFromDatabase.setDescripcion(producto.getDescripcion());
+        oProductoEntityFromDatabase.setMarca(producto.getMarca());
+        oProductoEntityFromDatabase.setUnidadDeCaja(producto.getUnidadDeCaja());
+        oProductoEntityFromDatabase.setUnidadDePack(producto.getUnidadDePack());
+        oProductoEntityFromDatabase.setCajasCapa(producto.getCajasCapa());
+        oProductoEntityFromDatabase.setCajasPalet(producto.getCajasPalet());
+        oProductoEntityFromDatabase.setReferenciaProveedor(producto.getReferenciaProveedor());
+        oProductoEntityFromDatabase.setEan(producto.getEan());
+        oProductoEntityFromDatabase.setEan_caja(producto.getEan_caja());
+        oProductoEntityFromDatabase.setEan_pack(producto.getEan_pack());
+        oProductoEntityFromDatabase.setLargo_caja(producto.getLargo_caja());
+        oProductoEntityFromDatabase.setAncho_caja(producto.getAncho_caja());
+        oProductoEntityFromDatabase.setAlto_caja(producto.getAlto_caja());
+        oProductoEntityFromDatabase.setPeso_caja(producto.getPeso_caja());
+        oProductoEntityFromDatabase.setLargo_unidad(producto.getLargo_unidad());
+        oProductoEntityFromDatabase.setAncho_unidad(producto.getAncho_unidad());
+        oProductoEntityFromDatabase.setAlto_unidad(producto.getAlto_unidad());
+        oProductoEntityFromDatabase.setPeso_neto_unidad(producto.getPeso_neto_unidad());
+        oProductoEntityFromDatabase.setPeso_escurrido_unidad(producto.getPeso_escurrido_unidad());
+        oProductoEntityFromDatabase.setDiasCaducidad(producto.getDiasCaducidad());
+        oProductoEntityFromDatabase.setIva(producto.getIva());
+        oProductoEntityFromDatabase.setObservaciones(producto.getObservaciones());
+        oProductoEntityFromDatabase.setImagen(producto.getImagen());
+        oProductoEntityFromDatabase.setPartidaArancelaria(producto.getPartidaArancelaria());
+        oProductoEntityFromDatabase.setPaisOrigen(producto.getPaisOrigen());
+        oProductoEntityFromDatabase.setEstado(producto.getEstado());
+        oProductoEntityFromDatabase.setLeadtime(producto.getLeadtime());
+        oProductoEntityFromDatabase.setMoq(producto.getMoq());
+        oProductoEntityFromDatabase.setMultiploDePedido(producto.getMultiploDePedido());
+
 
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
