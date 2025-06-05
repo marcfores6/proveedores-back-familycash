@@ -49,11 +49,6 @@ public class ProductoServiceDes {
     @Autowired
     private FtpUploader ftpUploader;
 
-    private final String FTP_HOST = "proveedores.familycash.es";
-    private final int FTP_PORT = 21;
-    private final String FTP_USER = "sistemas@grupofamily.es"; // Cambiar
-    private final String FTP_PASS = "DinahostingSistemas32$"; // Cambiar
-    private final String FTP_RUTA_BASE = "/www/assets/";
 
     public Page<ProductoEntityDes> getPage(Pageable oPageable, Optional<String> filter) {
         if (filter.isPresent()) {
@@ -77,14 +72,17 @@ public class ProductoServiceDes {
         return 1L;
     }
 
-    public ProductoEntityDes create(ProductoEntityDes producto, List<MultipartFile> imagenes, List<String> imagenUrls) throws IOException {
+     public ProductoEntityDes create(ProductoEntityDes producto, List<MultipartFile> imagenes, List<String> imagenUrls) throws IOException {
         ProductoEntityDes guardado = oProductoRepositoryDes.save(producto);
 
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    String nombreArchivo = "producto_" + UUID.randomUUID() + "." + FilenameUtils.getExtension(file.getOriginalFilename());
-                    String url = subirPorFTP(file.getInputStream(), nombreArchivo);
+                    String extension = FilenameUtils.getExtension(file.getOriginalFilename());
+                    String nombreArchivo = "producto_" + UUID.randomUUID() + "." + extension;
+                    String carpetaRelativa = "images/producto/" + guardado.getId();
+
+                    String url = ftpUploader.subirArchivo(file, nombreArchivo, carpetaRelativa);
 
                     ProductoImagenEntityDes imagenEntity = new ProductoImagenEntityDes();
                     imagenEntity.setProducto(guardado);
@@ -145,8 +143,11 @@ public class ProductoServiceDes {
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
-                    String nombreArchivo = "producto_" + UUID.randomUUID() + "." + FilenameUtils.getExtension(file.getOriginalFilename());
-                    String url = subirPorFTP(file.getInputStream(), nombreArchivo);
+                    String extension = FilenameUtils.getExtension(file.getOriginalFilename());
+                    String nombreArchivo = "producto_" + UUID.randomUUID() + "." + extension;
+                    String carpetaRelativa = "images/producto/" + producto.getId();
+
+                    String url = ftpUploader.subirArchivo(file, nombreArchivo, carpetaRelativa);
 
                     ProductoImagenEntityDes imagenEntity = new ProductoImagenEntityDes();
                     imagenEntity.setProducto(oProductoEntityDesFromDatabase);
@@ -170,30 +171,6 @@ public class ProductoServiceDes {
         oProductoRepositoryDes.save(oProductoEntityDesFromDatabase);
 
         return oProductoRepositoryDes.findById(producto.getId()).orElseThrow();
-    }
-
-    private String subirPorFTP(InputStream inputStream, String nombreArchivo) throws IOException {
-        FTPClient ftp = new FTPClient();
-        try {
-            ftp.connect(FTP_HOST, FTP_PORT);
-            ftp.login(FTP_USER, FTP_PASS);
-            ftp.enterLocalPassiveMode();
-            ftp.setFileType(FTP.BINARY_FILE_TYPE);
-
-            String rutaFinal = FTP_RUTA_BASE + nombreArchivo;
-            boolean subido = ftp.storeFile(rutaFinal, inputStream);
-
-            if (!subido) {
-                throw new IOException("No se pudo subir el archivo al servidor FTP.");
-            }
-
-            return "https://proveedores.familycash.es/assets/" + nombreArchivo;
-        } finally {
-            if (ftp.isConnected()) {
-                ftp.logout();
-                ftp.disconnect();
-            }
-        }
     }
 
     public Long deleteAll() {
