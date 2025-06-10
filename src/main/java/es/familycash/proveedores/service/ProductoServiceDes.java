@@ -203,7 +203,6 @@ public class ProductoServiceDes {
 
         oProductoImagenRepositoryDes.delete(imagen);
     }
-
     public Page<ProductoEntityDes> getPageByProveedor(Pageable pageable, String proveedorId) {
         String proveedorIdFormatted = String.format("%05d", Integer.parseInt(proveedorId));
         return oProductoRepositoryDes.findByProveedor(proveedorIdFormatted, pageable);
