@@ -1,10 +1,6 @@
 package es.familycash.proveedores.service;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -76,7 +72,8 @@ public class ProductoServiceDes {
                 if (file != null && !file.isEmpty()) {
                     String extension = FilenameUtils.getExtension(file.getOriginalFilename());
                     String nombreArchivo = "producto_" + UUID.randomUUID() + "." + extension;
-                    String carpetaRelativa = "images/producto/" + guardado.getId();
+                    String entornoFolder = "dev";
+                    String carpetaRelativa = "images/" + entornoFolder + "/producto/" + guardado.getId();
 
                     String url = ftpUploader.subirArchivo(file, nombreArchivo, carpetaRelativa);
 
@@ -142,7 +139,8 @@ public class ProductoServiceDes {
                 if (file != null && !file.isEmpty()) {
                     String extension = FilenameUtils.getExtension(file.getOriginalFilename());
                     String nombreArchivo = "producto_" + UUID.randomUUID() + "." + extension;
-                    String carpetaRelativa = "images/producto/" + producto.getId();
+                    String entornoFolder = "dev";
+                    String carpetaRelativa = "images/" + entornoFolder + "/producto/" + producto.getId();
 
                     String url = ftpUploader.subirArchivo(file, nombreArchivo, carpetaRelativa);
 
@@ -232,7 +230,8 @@ public class ProductoServiceDes {
             String nuevoNombre = codProveedor + "_" + ean + "_" + tipo + "." + extension;
 
             // Subir al FTP
-            String subcarpetaRelativa = "docs/producto/" + producto.getId();
+            String entornoFolder = "dev";
+            String subcarpetaRelativa = "docs/" + entornoFolder + "/producto/" + producto.getId();
             String urlFtp = ftpUploader.subirArchivo(documento, nuevoNombre, subcarpetaRelativa);
 
             // Crear y guardar el documento
@@ -259,21 +258,18 @@ public class ProductoServiceDes {
         String ean = producto.getEan() != null ? producto.getEan() : "0000000000000";
         String nuevoNombre = codProveedor + "_" + ean + "_" + nuevoTipo + ".pdf";
 
-        // Ruta física actual del archivo
-        String baseDir = "./proveedores/imagenes-familycash/images";
-        Path rutaActual = Paths.get(baseDir + doc.getDocumentoUrl());
+        // Extraer ruta base de la URL actual del FTP
+        String entornoFolder = "dev";
+        String carpetaBase = "docs/" + entornoFolder + "/producto/" + producto.getId();
+        String nuevaUrl = "https://proveedores.familycash.es/assets/" + carpetaBase + "/" + nuevoNombre;
 
-        // Nueva ruta
-        Path nuevaRuta = rutaActual.resolveSibling(nuevoNombre);
-
-        // Renombrar físicamente el archivo si existe
-        if (Files.exists(rutaActual)) {
-            Files.move(rutaActual, nuevaRuta, StandardCopyOption.REPLACE_EXISTING);
-        }
+        // (Opcional) si quisieras re-subir el archivo con el nuevo nombre, deberías
+        // descargarlo y volverlo a subir
+        // pero eso requiere más lógica y no lo hacemos si solo renombramos la URL
 
         // Actualizar campos en la entidad
         doc.setTipo(nuevoTipo);
-        doc.setDocumentoUrl("/docs/producto/" + producto.getId() + "/" + nuevoNombre);
+        doc.setDocumentoUrl(nuevaUrl);
         doc.setNombreOriginal(nuevoNombre);
 
         oProductoDocumentoRepositoryDes.save(doc);

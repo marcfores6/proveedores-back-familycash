@@ -12,7 +12,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import es.familycash.proveedores.config.AppConfig;
 import es.familycash.proveedores.entity.ProductoDocumentoEntity;
 import es.familycash.proveedores.entity.ProductoEntity;
 import es.familycash.proveedores.entity.ProductoImagenEntity;
@@ -42,8 +41,6 @@ public class ProductoService {
     @Autowired
     private FtpUploader ftpUploader;
 
-    @Autowired
-    private AppConfig appConfig;
 
     public Page<ProductoEntity> getPage(Pageable oPageable, Optional<String> filter) {
         if (filter.isPresent()) {
@@ -76,7 +73,7 @@ public class ProductoService {
                 if (file != null && !file.isEmpty()) {
                     String extension = FilenameUtils.getExtension(file.getOriginalFilename());
                     String nombreArchivo = "producto_" + UUID.randomUUID() + "." + extension;
-                    String entornoFolder = appConfig.isDev() ? "dev" : "prod";
+                    String entornoFolder = "prod";
                     String carpetaRelativa = "images/" + entornoFolder + "/producto/" + guardado.getId();
 
                     String url = ftpUploader.subirArchivo(file, nombreArchivo, carpetaRelativa);
@@ -143,7 +140,7 @@ public class ProductoService {
                 if (file != null && !file.isEmpty()) {
                     String extension = FilenameUtils.getExtension(file.getOriginalFilename());
                     String nombreArchivo = "producto_" + UUID.randomUUID() + "." + extension;
-                    String entornoFolder = appConfig.isDev() ? "dev" : "prod";
+                    String entornoFolder = "prod";
                     String carpetaRelativa = "images/" + entornoFolder + "/producto/" + producto.getId();
 
                     String url = ftpUploader.subirArchivo(file, nombreArchivo, carpetaRelativa);
@@ -234,7 +231,7 @@ public class ProductoService {
             String nuevoNombre = codProveedor + "_" + ean + "_" + tipo + "." + extension;
 
             // Subir al FTP
-            String entornoFolder = appConfig.isDev() ? "dev" : "prod";
+            String entornoFolder = "prod";
             String subcarpetaRelativa = "docs/" + entornoFolder + "/producto/" + producto.getId();
 
             String urlFtp = ftpUploader.subirArchivo(documento, nuevoNombre, subcarpetaRelativa);
@@ -264,7 +261,7 @@ public class ProductoService {
         String nuevoNombre = codProveedor + "_" + ean + "_" + nuevoTipo + ".pdf";
 
         // Extraer ruta base de la URL actual del FTP
-        String entornoFolder = appConfig.isDev() ? "dev" : "prod";
+        String entornoFolder = "prod";
         String carpetaBase = "docs/" + entornoFolder + "/producto/" + producto.getId();
         String nuevaUrl = "https://proveedores.familycash.es/assets/" + carpetaBase + "/" + nuevoNombre;
 
