@@ -91,9 +91,23 @@ public class FtpUploader {
         String[] directorios = ruta.split("/");
         String rutaActual = "";
         for (String dir : directorios) {
-            if (dir == null || dir.trim().isEmpty()) continue;
+            if (dir == null || dir.trim().isEmpty())
+                continue;
             rutaActual += "/" + dir;
-            ftp.makeDirectory(rutaActual);
+            if (!ftp.changeWorkingDirectory(rutaActual)) {
+                // Si no existe, la creamos
+                boolean creada = ftp.makeDirectory(rutaActual);
+                if (creada) {
+                    System.out.println("📁 Carpeta creada en FTP: " + rutaActual);
+                } else {
+                    System.out.println("⚠️ No se pudo crear la carpeta (quizás ya existe): " + rutaActual);
+                }
+                // Cambiar a la nueva carpeta
+                ftp.changeWorkingDirectory(rutaActual);
+            }
         }
+        // Volver a la raíz después (opcional)
+        ftp.changeWorkingDirectory("/");
     }
+
 }
