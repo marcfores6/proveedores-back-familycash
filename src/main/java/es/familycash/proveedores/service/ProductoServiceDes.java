@@ -1,19 +1,15 @@
 package es.familycash.proveedores.service;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.net.ftp.FTP;
-import org.apache.commons.net.ftp.FTPClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,10 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import es.familycash.proveedores.entity.ProductoDocumentoEntityDes;
-import es.familycash.proveedores.entity.ProductoDocumentoEntityDes;
-import es.familycash.proveedores.entity.ProductoEntity;
 import es.familycash.proveedores.entity.ProductoEntityDes;
-import es.familycash.proveedores.entity.ProductoImagenEntity;
 import es.familycash.proveedores.entity.ProductoImagenEntityDes;
 import es.familycash.proveedores.helper.FtpUploader;
 import es.familycash.proveedores.repository.ProductoDocumentoRepositoryDes;
@@ -52,7 +45,6 @@ public class ProductoServiceDes {
     @Autowired
     private FtpUploader ftpUploader;
 
-
     public Page<ProductoEntityDes> getPage(Pageable oPageable, Optional<String> filter) {
         if (filter.isPresent()) {
             return oProductoRepositoryDes.findByDescripcionContaining(filter.get(), oPageable);
@@ -75,7 +67,8 @@ public class ProductoServiceDes {
         return 1L;
     }
 
-     public ProductoEntityDes create(ProductoEntityDes producto, List<MultipartFile> imagenes, List<String> imagenUrls) throws IOException {
+    public ProductoEntityDes create(ProductoEntityDes producto, List<MultipartFile> imagenes, List<String> imagenUrls)
+            throws IOException {
         ProductoEntityDes guardado = oProductoRepositoryDes.save(producto);
 
         if (imagenes != null) {
@@ -109,7 +102,8 @@ public class ProductoServiceDes {
         return oProductoRepositoryDes.findById(guardado.getId()).orElseThrow();
     }
 
-    public ProductoEntityDes update(ProductoEntityDes producto, List<MultipartFile> imagenes, List<String> imagenUrls) throws IOException {
+    public ProductoEntityDes update(ProductoEntityDes producto, List<MultipartFile> imagenes, List<String> imagenUrls)
+            throws IOException {
         ProductoEntityDes oProductoEntityDesFromDatabase = oProductoRepositoryDes.findById(producto.getId())
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado con id: " + producto.getId()));
 
@@ -218,6 +212,10 @@ public class ProductoServiceDes {
     public void guardarDocumentosDelProducto(ProductoEntityDes producto, List<MultipartFile> documentos,
             List<String> tiposDocumentos) throws IOException {
 
+        if (documentos == null || documentos.isEmpty()) {
+            return; // No hay documentos, salimos sin hacer nada
+        }
+
         for (int i = 0; i < documentos.size(); i++) {
             MultipartFile documento = documentos.get(i);
             String tipo;
@@ -287,24 +285,24 @@ public class ProductoServiceDes {
     }
 
     public void eliminarDocumento(Long documentoId) {
-    ProductoDocumentoEntityDes documento = oProductoDocumentoRepositoryDes.findById(documentoId)
-            .orElseThrow(() -> new EntityNotFoundException("Documento no encontrado"));
+        ProductoDocumentoEntityDes documento = oProductoDocumentoRepositoryDes.findById(documentoId)
+                .orElseThrow(() -> new EntityNotFoundException("Documento no encontrado"));
 
-    String urlPublica = documento.getDocumentoUrl(); // https://proveedores.familycash.es/assets/...
-    String rutaRelativa = urlPublica.replace("https://proveedores.familycash.es/assets/", "");
-    String rutaFtpCompleta = "/www/assets/" + rutaRelativa;
+        String urlPublica = documento.getDocumentoUrl(); // https://proveedores.familycash.es/assets/...
+        String rutaRelativa = urlPublica.replace("https://proveedores.familycash.es/assets/", "");
+        String rutaFtpCompleta = "/www/assets/" + rutaRelativa;
 
-    try {
-        ftpUploader.eliminarArchivo(rutaFtpCompleta);
-        System.out.println("🗑️ Documento eliminado del FTP: " + rutaFtpCompleta);
-    } catch (IOException e) {
-        System.err.println("❌ Error al eliminar documento del FTP: " + e.getMessage());
-        // Puedes dejarlo así o lanzar una excepción controlada si quieres avisar
-        // throw new RuntimeException("No se pudo eliminar el archivo físico");
+        try {
+            ftpUploader.eliminarArchivo(rutaFtpCompleta);
+            System.out.println("🗑️ Documento eliminado del FTP: " + rutaFtpCompleta);
+        } catch (IOException e) {
+            System.err.println("❌ Error al eliminar documento del FTP: " + e.getMessage());
+            // Puedes dejarlo así o lanzar una excepción controlada si quieres avisar
+            // throw new RuntimeException("No se pudo eliminar el archivo físico");
+        }
+
+        oProductoDocumentoRepositoryDes.delete(documento);
     }
-
-    oProductoDocumentoRepositoryDes.delete(documento);
-}
 
     public ProductoEntityDes enviarProducto(Long id) throws Exception {
         ProductoEntityDes producto = oProductoRepositoryDes.findById(id)

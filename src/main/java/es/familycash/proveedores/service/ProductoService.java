@@ -41,7 +41,6 @@ public class ProductoService {
     @Autowired
     private FtpUploader ftpUploader;
 
-
     public Page<ProductoEntity> getPage(Pageable oPageable, Optional<String> filter) {
         if (filter.isPresent()) {
             return oProductoRepository.findByDescripcionContaining(filter.get(), oPageable);
@@ -134,7 +133,6 @@ public class ProductoService {
         oProductoEntityFromDatabase.setMoq(producto.getMoq());
         oProductoEntityFromDatabase.setMultiploDePedido(producto.getMultiploDePedido());
 
-
         if (imagenes != null) {
             for (MultipartFile file : imagenes) {
                 if (file != null && !file.isEmpty()) {
@@ -209,6 +207,10 @@ public class ProductoService {
     public void guardarDocumentosDelProducto(ProductoEntity producto, List<MultipartFile> documentos,
             List<String> tiposDocumentos) throws IOException {
 
+        if (documentos == null || documentos.isEmpty()) {
+            return; // No hay documentos, salimos sin hacer nada
+        }
+
         for (int i = 0; i < documentos.size(); i++) {
             MultipartFile documento = documentos.get(i);
             String tipo;
@@ -274,25 +276,24 @@ public class ProductoService {
     }
 
     public void eliminarDocumento(Long documentoId) {
-    ProductoDocumentoEntity documento = oProductoDocumentoRepository.findById(documentoId)
-            .orElseThrow(() -> new EntityNotFoundException("Documento no encontrado"));
+        ProductoDocumentoEntity documento = oProductoDocumentoRepository.findById(documentoId)
+                .orElseThrow(() -> new EntityNotFoundException("Documento no encontrado"));
 
-    String urlPublica = documento.getDocumentoUrl(); // https://proveedores.familycash.es/assets/...
-    String rutaRelativa = urlPublica.replace("https://proveedores.familycash.es/assets/", "");
-    String rutaFtpCompleta = "/www/assets/" + rutaRelativa;
+        String urlPublica = documento.getDocumentoUrl(); // https://proveedores.familycash.es/assets/...
+        String rutaRelativa = urlPublica.replace("https://proveedores.familycash.es/assets/", "");
+        String rutaFtpCompleta = "/www/assets/" + rutaRelativa;
 
-    try {
-        ftpUploader.eliminarArchivo(rutaFtpCompleta);
-        System.out.println("🗑️ Documento eliminado del FTP: " + rutaFtpCompleta);
-    } catch (IOException e) {
-        System.err.println("❌ Error al eliminar documento del FTP: " + e.getMessage());
-        // Puedes dejarlo así o lanzar una excepción controlada si quieres avisar
-        // throw new RuntimeException("No se pudo eliminar el archivo físico");
+        try {
+            ftpUploader.eliminarArchivo(rutaFtpCompleta);
+            System.out.println("🗑️ Documento eliminado del FTP: " + rutaFtpCompleta);
+        } catch (IOException e) {
+            System.err.println("❌ Error al eliminar documento del FTP: " + e.getMessage());
+            // Puedes dejarlo así o lanzar una excepción controlada si quieres avisar
+            // throw new RuntimeException("No se pudo eliminar el archivo físico");
+        }
+
+        oProductoDocumentoRepository.delete(documento);
     }
-
-    oProductoDocumentoRepository.delete(documento);
-}
-
 
     public ProductoEntity enviarProducto(Long id) throws Exception {
         ProductoEntity producto = oProductoRepository.findById(id)
