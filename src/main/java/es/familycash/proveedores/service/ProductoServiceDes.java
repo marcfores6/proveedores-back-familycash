@@ -201,6 +201,7 @@ public class ProductoServiceDes {
 
         oProductoImagenRepositoryDes.delete(imagen);
     }
+
     public Page<ProductoEntityDes> getPageByProveedor(Pageable pageable, String proveedorId) {
         String proveedorIdFormatted = String.format("%05d", Integer.parseInt(proveedorId));
         return oProductoRepositoryDes.findByProveedor(proveedorIdFormatted, pageable);
@@ -305,6 +306,7 @@ public class ProductoServiceDes {
 
         producto.setEstado("ENVIADO");
         return oProductoRepositoryDes.save(producto);
+
     }
 
     public void deleteProductoYArchivos(Long id) throws IOException {
