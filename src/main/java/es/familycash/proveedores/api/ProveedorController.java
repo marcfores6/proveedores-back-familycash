@@ -220,13 +220,4 @@ public class ProveedorController {
         }
     }
 
-    @RestController
-    public class HealthCheckController {
-
-        @GetMapping("/healthcheck")
-        public ResponseEntity<String> healthCheck() {
-            return ResponseEntity.ok("OK");
-        }
-    }
-
 }
